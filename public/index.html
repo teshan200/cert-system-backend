@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Certificate Verification System - Home</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 800px;
+            width: 100%;
+            padding: 60px;
+            text-align: center;
+        }
+
+        h1 {
+            color: #667eea;
+            font-size: 42px;
+            margin-bottom: 20px;
+        }
+
+        p {
+            color: #666;
+            font-size: 18px;
+            margin-bottom: 40px;
+        }
+
+        .portals {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 40px;
+        }
+
+        .portal-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px 20px;
+            border-radius: 12px;
+            text-decoration: none;
+            transition: transform 0.2s;
+            cursor: pointer;
+        }
+
+        .portal-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .portal-card h3 {
+            font-size: 20px;
+            margin-bottom: 10px;
+        }
+
+        .portal-card p {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 14px;
+        }
+
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 50px;
+            text-align: left;
+        }
+
+        .feature {
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 10px;
+        }
+
+        .feature h4 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .feature p {
+            color: #666;
+            font-size: 14px;
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎓 Certificate Verification System</h1>
+        <p>Blockchain-powered certificate management for educational institutions</p>
+
+        <div class="portals">
+            <a href="/student/login" class="portal-card">
+                <h3>👨‍🎓 Students</h3>
+                <p>View your certificates</p>
+            </a>
+
+            <a href="#" class="portal-card" onclick="alert('Coming soon!'); return false;">
+                <h3>🏛️ Universities</h3>
+                <p>Issue certificates</p>
+            </a>
+
+            <a href="#" class="portal-card" onclick="alert('Coming soon!'); return false;">
+                <h3>🔍 Verify</h3>
+                <p>Verify certificates</p>
+            </a>
+        </div>
+
+        <div class="features">
+            <div class="feature">
+                <h4>🔐 Blockchain Verified</h4>
+                <p>All certificates stored on Polygon blockchain for immutability and transparency</p>
+            </div>
+
+            <div class="feature">
+                <h4>⚡ Instant Verification</h4>
+                <p>Verify any certificate in seconds with certificate ID or student ID</p>
+            </div>
+
+            <div class="feature">
+                <h4>🤖 AI Career Insights</h4>
+                <p>Get personalized career path recommendations based on your certifications</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

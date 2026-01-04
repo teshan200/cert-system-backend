@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Issue Certificate with MetaMask</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .container {
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+      padding: 40px;
+      max-width: 600px;
+      width: 100%;
+    }
+
+    h1 {
+      color: #333;
+      margin-bottom: 30px;
+      text-align: center;
+    }
+
+    .wallet-section {
+      background: #f8f9fa;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 30px;
+      border: 2px solid #e9ecef;
+    }
+
+    .wallet-info {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+
+    .wallet-info label {
+      font-weight: 600;
+      color: #333;
+    }
+
+    .wallet-address {
+      font-family: monospace;
+      background: white;
+      padding: 8px 12px;
+      border-radius: 5px;
+      color: #667eea;
+      word-break: break-all;
+    }
+
+    .balance {
+      font-size: 14px;
+      color: #666;
+      margin-top: 10px;
+    }
+
+    .deposit-row {
+      display: flex;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .deposit-row input {
+      flex: 1;
+    }
+
+    .btn-deposit {
+      background: #ff9f1c;
+      color: #222;
+      padding: 12px 16px;
+    }
+
+    .btn-refresh {
+      background: #17a2b8;
+      color: white;
+      margin-top: 10px;
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-top: 10px;
+    }
+
+    .status-badge.connected {
+      background: #d4edda;
+      color: #155724;
+    }
+
+    .status-badge.disconnected {
+      background: #f8d7da;
+      color: #721c24;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 5px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .btn-connect {
+      background: #667eea;
+      color: white;
+      margin-bottom: 10px;
+    }
+
+    .btn-connect:hover:not(:disabled) {
+      background: #764ba2;
+      transform: translateY(-2px);
+      box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-connect:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      color: #333;
+      font-weight: 500;
+    }
+
+    input,
+    textarea {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      font-size: 14px;
+      font-family: inherit;
+      transition: border-color 0.3s ease;
+    }
+
+    input:focus,
+    textarea:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 100px;
+    }
+
+    .btn-issue {
+      background: #28a745;
+      color: white;
+      width: 100%;
+    }
+
+    .btn-issue:hover:not(:disabled) {
+      background: #218838;
+      transform: translateY(-2px);
+      box-shadow: 0 5px 20px rgba(40, 167, 69, 0.4);
+    }
+
+    .btn-issue:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+
+    .alert {
+      padding: 12px;
+      border-radius: 5px;
+      margin-bottom: 20px;
+      font-weight: 500;
+    }
+
+    .alert-info {
+      background: #d1ecf1;
+      color: #0c5460;
+      border: 1px solid #bee5eb;
+    }
+
+    .alert-success {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+
+    .alert-error {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+
+    .alert-warning {
+      background: #fff3cd;
+      color: #856404;
+      border: 1px solid #ffeeba;
+    }
+
+    .loading {
+      display: none;
+      text-align: center;
+      margin: 20px 0;
+    }
+
+    .spinner {
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #667eea;
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 10px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .transaction-details {
+      display: none;
+      background: #f8f9fa;
+      padding: 15px;
+      border-radius: 5px;
+      margin-top: 20px;
+      border-left: 4px solid #28a745;
+    }
+
+    .transaction-details.show {
+      display: block;
+    }
+
+    .detail-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid #e9ecef;
+      font-size: 14px;
+    }
+
+    .detail-row:last-child {
+      border-bottom: none;
+    }
+
+    .detail-label {
+      font-weight: 600;
+      color: #666;
+    }
+
+    .detail-value {
+      color: #333;
+      word-break: break-all;
+      text-align: right;
+      flex: 1;
+      margin-left: 10px;
+    }
+
+    .link {
+      color: #667eea;
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    .link:hover {
+      text-decoration: underline;
+    }
+
+    .network-info {
+      font-size: 12px;
+      color: #666;
+      margin-top: 10px;
+      padding: 10px;
+      background: #f0f0f0;
+      border-radius: 5px;
+    }
+
+    .section-title {
+      margin: 30px 0 15px;
+      font-size: 18px;
+      font-weight: 700;
+      color: #333;
+      text-align: left;
+    }
+
+    .bulk-box {
+      margin-top: 10px;
+      padding: 16px;
+      background: #f8f9fa;
+      border: 1px solid #e9ecef;
+      border-radius: 8px;
+    }
+
+    .bulk-controls {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+    }
+
+    .bulk-controls input[type="file"] {
+      flex: 1;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      background: #fff;
+    }
+
+    .bulk-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+      flex-wrap: wrap;
+    }
+
+    .btn-secondary {
+      background: #6c757d;
+      color: #fff;
+    }
+
+    .btn-bulk {
+      background: #0069d9;
+      color: #fff;
+    }
+
+    .bulk-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+      font-size: 13px;
+    }
+
+    .bulk-table th,
+    .bulk-table td {
+      border: 1px solid #e3e6f0;
+      padding: 8px;
+      text-align: left;
+    }
+
+    .bulk-table th {
+      background: #f1f3f5;
+      font-weight: 700;
+      color: #444;
+    }
+
+    .pill {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      background: #edf2ff;
+      color: #3b5bdb;
+      margin-left: 6px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🎓 Issue Certificate with MetaMask</h1>
+
+    <!-- Alerts -->
+    <div id="alertContainer"></div>
+
+    <!-- Wallet Section -->
+    <div class="wallet-section">
+      <div class="wallet-info">
+        <label>MetaMask Wallet:</label>
+        <div>
+          <span class="wallet-address" id="walletAddress">Not connected</span>
+          <span class="status-badge disconnected" id="statusBadge">Disconnected</span>
+        </div>
+      </div>
+      <div class="balance" id="balanceInfo"></div>
+      <div class="balance" id="contractBalanceInfo"></div>
+      <div class="balance" id="gasCostInfo"></div>
+      <div class="deposit-row">
+        <input
+          type="number"
+          step="0.001"
+          id="depositAmount"
+          placeholder="Amount POL to deposit"
+        />
+        <button class="btn-deposit" id="btnDeposit">Deposit</button>
+      </div>
+      <button class="btn-refresh" id="btnRefresh">Refresh Balances</button>
+      <button class="btn-connect" id="btnConnect">Connect MetaMask</button>
+      <div class="network-info">
+        <strong>Network:</strong> Polygon Amoy (Chain ID: 80002)<br>
+        <strong>Contract:</strong> 0x7d6159A7cBd7061AA231288651e750B5c5046343
+      </div>
+    </div>
+
+    <!-- Form Section -->
+    <form id="certificateForm">
+      <div class="form-group">
+        <label for="certId">Certificate ID *</label>
+        <input
+          type="text"
+          id="certId"
+          name="certId"
+          placeholder="e.g., CERT-2025-001"
+          required
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="studentName">Student Name *</label>
+        <input
+          type="text"
+          id="studentName"
+          name="studentName"
+          placeholder="Full name of student"
+          required
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="courseName">Course Name *</label>
+        <input
+          type="text"
+          id="courseName"
+          name="courseName"
+          placeholder="Course or program name"
+          required
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="issueDate">Issue Date *</label>
+        <input
+          type="date"
+          id="issueDate"
+          name="issueDate"
+          required
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="issuerName">Issuer Name *</label>
+        <input
+          type="text"
+          id="issuerName"
+          name="issuerName"
+          placeholder="University or institution name"
+          required
+        />
+      </div>
+
+      <div class="loading" id="loading">
+        <div class="spinner"></div>
+        <p>Processing your certificate...</p>
+      </div>
+
+      <button
+        type="submit"
+        class="btn-issue"
+        id="btnSubmit"
+        disabled
+      >
+        Issue Certificate with MetaMask
+      </button>
+    </form>
+
+    <h2 class="section-title">📦 Bulk CSV Issuance (Option 3)</h2>
+    <div class="bulk-box">
+      <div class="bulk-controls">
+        <input type="file" id="bulkFile" accept=".csv" />
+        <span class="pill" id="bulkCount">0 records</span>
+      </div>
+      <p style="font-size:13px; color:#555; margin-bottom:10px;">CSV columns required: certId, studentName, courseName, issueDate (YYYY-MM-DD), issuerName</p>
+      <div class="bulk-actions">
+        <button type="button" class="btn-secondary" id="btnClearBulk">Clear List</button>
+        <button type="button" class="btn-bulk" id="btnBulkIssue" disabled>Sign & Issue Bulk</button>
+      </div>
+      <table class="bulk-table" id="bulkTable">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Cert ID</th>
+            <th>Student</th>
+            <th>Course</th>
+            <th>Issue Date</th>
+            <th>Issuer</th>
+          </tr>
+        </thead>
+        <tbody id="bulkTableBody">
+          <tr><td colspan="6" style="text-align:center; color:#888;">No rows loaded</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Transaction Details -->
+    <div class="transaction-details" id="transactionDetails">
+      <h3 style="margin-bottom: 15px; color: #28a745;">✅ Certificate Issued Successfully!</h3>
+      <div class="detail-row">
+        <span class="detail-label">Transaction Hash:</span>
+        <span class="detail-value">
+          <a class="link" id="txHashLink" target="_blank"></a>
+        </span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Block Number:</span>
+        <span class="detail-value" id="blockNumber"></span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Gas Used:</span>
+        <span class="detail-value" id="gasUsed"></span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Certificate ID:</span>
+        <span class="detail-value" id="certIdDisplay"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers.js/5.7.2/ethers.umd.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+  <script src="/metamask-integration.js"></script>
+  <script src="/js/metamask-ui.js"></script>
+</body>
+</html>

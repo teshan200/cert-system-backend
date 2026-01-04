@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Issue Certificate - University Dashboard</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f5f7fa;
+      min-height: 100vh;
+      display: flex;
+    }
+
+    .sidebar {
+      width: 240px;
+      background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      padding: 24px 20px;
+      box-shadow: 4px 0 20px rgba(0,0,0,0.08);
+      position: sticky;
+      top: 0;
+      height: 100vh;
+    }
+
+    .sidebar h1 {
+      font-size: 20px;
+      margin-bottom: 24px;
+    }
+
+    .sidebar .nav-link {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      margin-bottom: 8px;
+      border-radius: 8px;
+      color: #fff;
+      text-decoration: none;
+      background: rgba(255,255,255,0.06);
+      transition: background 0.2s;
+      font-size: 14px;
+    }
+
+    .sidebar .nav-link:hover,
+    .sidebar .nav-link.active {
+      background: rgba(255,255,255,0.12);
+    }
+
+    .sidebar .logout-btn {
+      margin-top: auto;
+      background: rgba(255,255,255,0.16);
+      border: 1px solid rgba(255,255,255,0.3);
+      color: #fff;
+      padding: 10px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .main {
+      flex: 1;
+      padding: 24px 28px;
+    }
+
+    .page-header {
+      background: #fff;
+      color: #333;
+      padding: 20px 24px;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+      margin-bottom: 24px;
+    }
+
+    .page-header h1 {
+      font-size: 24px;
+      margin-bottom: 8px;
+    }
+
+    .page-header p {
+      color: #666;
+      font-size: 14px;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .section {
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      margin-bottom: 30px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: #333;
+      font-size: 14px;
+    }
+
+    input[type="text"],
+    input[type="email"],
+    select,
+    textarea {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      font-size: 14px;
+      transition: border-color 0.3s;
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .submit-btn {
+      width: 100%;
+      padding: 12px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 5px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .submit-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+    }
+
+    .submit-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .message {
+      padding: 12px;
+      border-radius: 5px;
+      margin-bottom: 20px;
+      font-size: 14px;
+      display: none;
+    }
+
+    .message.error {
+      background-color: #fee;
+      color: #c00;
+      display: block;
+    }
+
+    .message.success {
+      background-color: #efe;
+      color: #060;
+      display: block;
+    }
+
+    @media (max-width: 768px) {
+      body {
+        flex-direction: column;
+      }
+
+      .sidebar {
+        position: relative;
+        width: 100%;
+        height: auto;
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 8px;
+        padding: 16px;
+      }
+
+      .sidebar h1 {
+        width: 100%;
+        margin-bottom: 8px;
+      }
+
+      .sidebar .nav-link {
+        flex: 1 1 30%;
+        justify-content: center;
+      }
+
+      .sidebar .logout-btn {
+        width: 100%;
+      }
+
+      .main {
+        padding: 16px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="sidebar">
+    <h1>🏫 University</h1>
+    <a class="nav-link" href="overview.html">🏠 Overview</a>
+    <a class="nav-link active" href="issue-certificate.html">📜 Issue Certificate</a>
+    <a class="nav-link" href="bulk-upload.html">📤 Bulk Upload</a>
+    <a class="nav-link" href="history.html">📚 History</a>
+    <a class="nav-link" href="wallet.html">💳 Wallet & Balance</a>
+    <button class="logout-btn" onclick="logout()">Logout</button>
+  </div>
+
+  <div class="main">
+    <div class="page-header">
+      <h1>📜 Issue Single Certificate</h1>
+      <p>Issue a blockchain-verified certificate for a student</p>
+    </div>
+
+    <div class="container">
+      <div class="section">
+        <div id="issueMessage" class="message"></div>
+
+        <form id="issueCertForm">
+          <div class="form-group">
+            <label for="student_id">Student ID (STU...) *</label>
+            <input type="text" id="student_id" name="student_id" placeholder="STU123456..." required>
+            <small style="color: #666;">Enter the registered student ID</small>
+          </div>
+
+          <div class="form-group">
+            <label for="course_name">Course/Program Name *</label>
+            <input type="text" id="course_name" name="course_name" placeholder="e.g., B.Tech Computer Science" required>
+          </div>
+
+          <div class="form-group">
+            <label for="grade">Grade/Score *</label>
+            <input type="text" id="grade" name="grade" placeholder="e.g., A, 95%, First Class" required>
+          </div>
+
+          <button type="submit" class="submit-btn">Issue Certificate</button>
+        </form>
+
+        <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee;">
+          <p style="color: #666; font-size: 13px; line-height: 1.6;">
+            <strong>Note:</strong> The certificate will be stored on the blockchain. 
+            Make sure all information is accurate before submitting. The student will 
+            be able to view and share this certificate once issued.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+  <script>
+    let provider = null;
+    let signer = null;
+    let signerAddress = null;
+
+    // Check authentication
+    window.addEventListener('load', async () => {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        window.location.href = '/university/login';
+        return;
+      }
+    });
+
+    async function ensureWallet() {
+      if (!window.ethereum) {
+        throw new Error('MetaMask not found');
+      }
+      if (!provider) {
+        provider = new ethers.providers.Web3Provider(window.ethereum);
+      }
+      const accounts = await provider.send('eth_requestAccounts', []);
+      signer = provider.getSigner();
+      signerAddress = await signer.getAddress();
+      return accounts;
+    }
+
+    // Issue single certificate with MetaMask signature, relayer submit
+    document.getElementById('issueCertForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const student_id = document.getElementById('student_id').value.trim();
+      const course_name = document.getElementById('course_name').value.trim();
+      const grade = document.getElementById('grade').value.trim();
+
+      if (!student_id || !course_name || !grade) {
+        showMessage('All fields required', 'error');
+        return;
+      }
+
+      const btn = e.target.querySelector('.submit-btn');
+      btn.disabled = true;
+      btn.textContent = 'Issuing...';
+
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) throw new Error('Not authenticated');
+
+        // Ensure wallet & signer
+        await ensureWallet();
+
+        // 1) Get payload to sign
+        const payloadResp = await fetch('/api/university/certificate/sign-payload', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ student_id, course_name, grade })
+        });
+
+        const payload = await payloadResp.json();
+        if (!payloadResp.ok) {
+          throw new Error(payload.error || 'Failed to prepare signature payload');
+        }
+
+        // 2) MetaMask signs message_hash
+        const signature = await signer.signMessage(ethers.utils.arrayify(payload.message_hash));
+
+        // 3) Relay via backend
+        const issueResp = await fetch('/api/university/certificate/issue-signed', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            certificate_id: payload.certificate_id,
+            student_id,
+            course_name,
+            grade,
+            issued_date: payload.issued_date,
+            signer_address: payload.signer_address,
+            message_hash: payload.message_hash,
+            signature
+          })
+        });
+
+        const result = await issueResp.json();
+        if (!issueResp.ok) {
+          throw new Error(result.error || 'Failed to issue certificate');
+        }
+
+        showMessage('✅ Certificate issued! ID: ' + result.certificate.certificate_id + '\nTX: ' + result.certificate.blockchain.transactionHash, 'success');
+        document.getElementById('issueCertForm').reset();
+      } catch (error) {
+        showMessage('Error: ' + error.message, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Issue Certificate';
+      }
+    });
+
+    function showMessage(text, type) {
+      const el = document.getElementById('issueMessage');
+      el.textContent = text;
+      el.className = 'message ' + type;
+    }
+
+    function logout() {
+      localStorage.removeItem('token');
+      localStorage.removeItem('institute_id');
+      localStorage.removeItem('institute_name');
+      window.location.href = '/';
+    }
+  </script>
+</body>
+</html>

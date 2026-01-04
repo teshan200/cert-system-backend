@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Certificate Issuer - Blockchain Edition</title>
+  <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 600px;
+      margin: 50px auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    .container {
+      background: white;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    h1 { color: #333; }
+    button {
+      background: #0066cc;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      margin: 5px 5px 5px 0;
+    }
+    button:hover { background: #0052a3; }
+    input[type="file"] {
+      padding: 10px;
+      margin: 10px 0;
+    }
+    #status {
+      margin-top: 20px;
+      padding: 15px;
+      border-radius: 4px;
+      background: #f0f0f0;
+      min-height: 20px;
+      word-wrap: break-word;
+    }
+    .success { background: #d4edda; color: #155724; }
+    .error { background: #f8d7da; color: #721c24; }
+    .info { background: #d1ecf1; color: #0c5460; }
+    .address { 
+      background: #e7f3ff; 
+      padding: 10px; 
+      border-radius: 4px;
+      margin: 10px 0;
+      word-break: break-all;
+      font-family: monospace;
+      font-size: 12px;
+    }
+    .section {
+      margin: 20px 0;
+      padding: 15px;
+      background: #f9f9f9;
+      border-left: 4px solid #0066cc;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h1>🎓 Blockchain Certificate Issuer</h1>
+    
+    <div class="section">
+      <h3>1. Connect Wallet</h3>
+      <button onclick="connect()">🔌 Connect MetaMask</button>
+      <div id="addr" class="address" style="display:none;"></div>
+    </div>
+
+    <div class="section">
+      <h3>2. Select CSV File</h3>
+      <p>CSV format: <code>certificate_id, name, course</code></p>
+      <input type="file" id="csv" accept=".csv" />
+    </div>
+
+    <div class="section">
+      <h3>3. Sign & Issue Certificates</h3>
+      <button onclick="signAndSend()">✍️ Sign & Issue Certificates</button>
+    </div>
+
+    <div id="status" style="display:none;"></div>
+  </div>
+
+  <script>
+    // Configuration
+    const CONTRACT_ADDRESS = "0xb6C523f2d0adc74776a1580555b5BBE46b0D4e42";
+    const CONTRACT_ABI = ["function nonces(address) view returns (uint256)"];
+
+    // State
+    let signer;
+    let address;
+    let contract;
+    let provider;
+
+    /**
+     * Display status message with styling
+     */
+    function setStatus(text, type = "info") {
+      const el = document.getElementById("status");
+      el.innerText = text;
+      el.style.display = "block";
+      el.className = type;
+    }
+
+    /**
+     * Clear status
+     */
+    function clearStatus() {
+      document.getElementById("status").style.display = "none";
+    }
+
+    /**
+     * Connect to MetaMask and initialize contract
+     */
+    async function ensureConnected() {
+      if (!window.ethereum) {
+        throw new Error("❌ MetaMask not found. Please install MetaMask.");
+      }
+
+      try {
+        // Create provider and request account access
+        provider = new ethers.providers.Web3Provider(window.ethereum);
+        await provider.send("eth_requestAccounts", []);
+
+        // Get signer and address
+        signer = provider.getSigner();
+        address = await signer.getAddress();
+
+        // Initialize contract interface for reading nonce
+        contract = new ethers.Contract(
+          CONTRACT_ADDRESS,
+          CONTRACT_ABI,
+          provider
+        );
+
+        // Display connected address
+        const addrEl = document.getElementById("addr");
+        addrEl.innerText = `Connected: ${address}`;
+        addrEl.style.display = "block";
+
+        return true;
+      } catch (err) {
+        throw new Error(`Connection failed: ${err.message}`);
+      }
+    }
+
+    /**
+     * Connect button handler
+     */
+    async function connect() {
+      clearStatus();
+      try {
+        await ensureConnected();
+        setStatus("✅ Connected to MetaMask", "success");
+      } catch (err) {
+        setStatus(err.message, "error");
+      }
+    }
+
+    /**
+     * Main sign and send function
+     * Flow:
+     * 1. Read CSV and hash certificates
+     * 2. Fetch nonce from contract
+     * 3. Build plain-text message
+     * 4. Sign with MetaMask (ONE signature only)
+     * 5. Send to backend with CSV and signature
+     */
+    async function signAndSend() {
+      clearStatus();
+      try {
+        // Ensure connected
+        if (!signer) {
+          await ensureConnected();
+        }
+
+        // Validate CSV file
+        const fileInput = document.getElementById("csv");
+        if (!fileInput.files.length) {
+          throw new Error("❌ Please select a CSV file first");
+        }
+
+        const file = fileInput.files[0];
+        setStatus("📖 Reading CSV file...", "info");
+
+        // Read and parse CSV
+        const text = await file.text();
+        const lines = text.trim().split(/\r?\n/).slice(1); // Skip header
+
+        if (!lines.length) {
+          throw new Error("❌ CSV file is empty");
+        }
+
+        // Parse rows and hash certificates
+        const rows = [];
+        const certIds = [];
+
+        for (const line of lines) {
+          const [id, name, course] = line.split(",").map(s => s.trim());
+          if (!id || !name || !course) {
+            throw new Error(`❌ Invalid row: ${line}`);
+          }
+          rows.push({ id, name, course });
+          certIds.push(id);
+        }
+
+        setStatus("🔐 Fetching nonce from contract...", "info");
+
+        // Fetch nonce from contract to prevent replay attacks
+        let nonce;
+        try {
+          nonce = await contract.nonces(address);
+        } catch (err) {
+          throw new Error(
+            `❌ Cannot read nonce from contract ${CONTRACT_ADDRESS}. ` +
+            `Verify: 1) Contract address is correct, 2) You're on Polygon Amoy testnet, ` +
+            `3) Contract is deployed. Error: ${err.message}`
+          );
+        }
+
+        // Build plain-text message (human-readable for MetaMask to display)
+        const messageText = [
+          "Certificate Issuance Approval",
+          `Institute: ${address}`,
+          `Nonce: ${nonce.toString()}`,
+          `Certificates (${rows.length}):`,
+          ...certIds
+        ].join("\n");
+
+        // Create message hash for verification
+        const messageHash = ethers.utils.hashMessage(messageText);
+
+        setStatus("📝 Please sign the message in MetaMask...", "info");
+
+        // Sign the plain-text message with MetaMask
+        // MetaMask will show the human-readable message, not a hash
+        const signature = await signer.signMessage(messageText);
+
+        console.log("✅ Signature obtained!");
+        console.log("Signer address:", address);
+        console.log("Message:", messageText);
+        console.log("Message hash:", messageHash);
+        console.log("Signature:", signature);
+
+        setStatus(`🚀 Sending ${rows.length} certificates to backend...`, "info");
+
+        // Prepare form data for backend - send hash instead of message to avoid FormData corruption
+        const form = new FormData();
+        form.append("csv", file);
+        form.append("institute", address);
+        form.append("signature", signature);
+        form.append("messageHash", messageHash);
+
+        console.log("📤 Sending to backend:");
+        console.log("  institute:", address);
+        console.log("  signature:", signature);
+        console.log("  messageHash:", messageHash);
+
+        // Send to backend relayer
+        const res = await fetch("http://localhost:3000/issue", {
+          method: "POST",
+          body: form
+        });
+
+        if (!res.ok) {
+          const errorData = await res.json();
+          console.error("❌ Backend error response:", errorData);
+          throw new Error(errorData.error || `Backend error: ${res.status}`);
+        }
+
+        const result = await res.json();
+
+        // Success!
+        setStatus(
+          `✅ Success! Issued ${result.txs.length} certificates.\n\n` +
+          `Transaction hashes:\n${result.txs.join("\n")}`,
+          "success"
+        );
+      } catch (err) {
+        console.error("Error:", err);
+        setStatus(err.message, "error");
+      }
+    }
+
+    // Initialize on page load
+    window.addEventListener("load", clearStatus);
+  </script>
+
+</body>
+
+</html>

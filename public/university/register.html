@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>University Registration - Certificate Verification System</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .container {
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      overflow: hidden;
+      max-width: 500px;
+      width: 100%;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 40px 20px;
+      text-align: center;
+    }
+
+    .header h1 {
+      font-size: 28px;
+      margin-bottom: 10px;
+    }
+
+    .header p {
+      font-size: 14px;
+      opacity: 0.9;
+    }
+
+    .form-content {
+      padding: 40px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: #333;
+      font-size: 14px;
+    }
+
+    input[type="text"],
+    input[type="email"],
+    input[type="password"],
+    select {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      font-size: 14px;
+      transition: border-color 0.3s;
+    }
+
+    input[type="text"]:focus,
+    input[type="email"]:focus,
+    input[type="password"]:focus,
+    select:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .form-group small {
+      display: block;
+      margin-top: 5px;
+      color: #666;
+      font-size: 12px;
+    }
+
+    .submit-btn {
+      width: 100%;
+      padding: 12px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 5px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .submit-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+    }
+
+    .submit-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .login-link {
+      text-align: center;
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 1px solid #eee;
+      color: #666;
+      font-size: 14px;
+    }
+
+    .login-link a {
+      color: #667eea;
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .login-link a:hover {
+      text-decoration: underline;
+    }
+
+    .message {
+      padding: 12px;
+      border-radius: 5px;
+      margin-bottom: 20px;
+      font-size: 14px;
+      display: none;
+    }
+
+    .message.error {
+      background-color: #fee;
+      color: #c00;
+      display: block;
+    }
+
+    .message.success {
+      background-color: #efe;
+      color: #060;
+      display: block;
+    }
+
+    .loading {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .wallet-info {
+      background-color: #f0f4ff;
+      padding: 12px;
+      border-radius: 5px;
+      font-size: 12px;
+      color: #667eea;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🏫 University Registration</h1>
+      <p>Join our certificate verification network</p>
+    </div>
+
+    <div class="form-content">
+      <div id="message" class="message"></div>
+
+      <form id="registrationForm">
+        <div class="form-group">
+          <label for="institute_name">University/Institute Name *</label>
+          <input type="text" id="institute_name" name="institute_name" required>
+          <small>Your official institution name</small>
+        </div>
+
+        <div class="form-group">
+          <label for="email">Email Address *</label>
+          <input type="email" id="email" name="email" required>
+          <small>Official university email</small>
+        </div>
+
+        <div class="form-group">
+          <label for="password">Password *</label>
+          <input type="password" id="password" name="password" required>
+          <small>Minimum 6 characters</small>
+        </div>
+
+        <div class="form-group">
+          <label for="wallet_address">Wallet Address (0x...) *</label>
+          <input type="text" id="wallet_address" name="wallet_address" placeholder="0x..." required>
+          <button type="button" class="submit-btn" style="margin-top:10px; background:#17a2b8;" id="btnConnectWallet">Connect MetaMask to fill</button>
+          <div class="wallet-info">
+            💡 This will be your signing wallet for issuing certificates. Must be a valid Ethereum address. Use the button to pull it directly from your MetaMask account.
+          </div>
+        </div>
+
+        <button type="submit" class="submit-btn">Register University</button>
+
+        <div class="login-link">
+          Already registered? <a href="/university/login">Login here</a>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const form = document.getElementById('registrationForm');
+    const messageDiv = document.getElementById('message');
+    const walletInput = document.getElementById('wallet_address');
+    const connectWalletBtn = document.getElementById('btnConnectWallet');
+
+    connectWalletBtn.addEventListener('click', async () => {
+      if (!window.ethereum) {
+        showMessage('MetaMask not detected. Please install MetaMask.', 'error');
+        return;
+      }
+
+      try {
+        connectWalletBtn.disabled = true;
+        connectWalletBtn.textContent = 'Connecting...';
+        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+        if (accounts && accounts[0]) {
+          walletInput.value = accounts[0];
+          showMessage('Wallet address filled from MetaMask', 'success');
+        } else {
+          showMessage('No accounts returned from MetaMask', 'error');
+        }
+      } catch (err) {
+        showMessage('Failed to connect MetaMask: ' + err.message, 'error');
+      } finally {
+        connectWalletBtn.disabled = false;
+        connectWalletBtn.textContent = 'Connect MetaMask to fill';
+      }
+    });
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const institute_name = document.getElementById('institute_name').value.trim();
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+      const wallet_address = document.getElementById('wallet_address').value.trim();
+
+      // Validation
+      if (!institute_name || !email || !password || !wallet_address) {
+        showMessage('All fields are required', 'error');
+        return;
+      }
+
+      if (password.length < 6) {
+        showMessage('Password must be at least 6 characters', 'error');
+        return;
+      }
+
+      if (!wallet_address.startsWith('0x') || wallet_address.length !== 42) {
+        showMessage('Invalid wallet address format (should be 0x...)', 'error');
+        return;
+      }
+
+      // Disable submit button
+      const btn = form.querySelector('.submit-btn');
+      btn.disabled = true;
+      btn.textContent = 'Registering...';
+
+      try {
+        const response = await fetch('/api/university/register', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            institute_name,
+            email,
+            password,
+            wallet_address
+          })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          showMessage(data.error || 'Registration failed', 'error');
+          btn.disabled = false;
+          btn.textContent = 'Register University';
+          return;
+        }
+
+        // Save token
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('institute_id', data.institute.institute_id);
+        localStorage.setItem('institute_name', data.institute.institute_name);
+
+        showMessage(data.message + ' Redirecting to dashboard...', 'success');
+
+        // Redirect after 2 seconds
+        setTimeout(() => {
+          window.location.href = '/university/dashboard';
+        }, 2000);
+      } catch (error) {
+        showMessage('Network error: ' + error.message, 'error');
+        btn.disabled = false;
+        btn.textContent = 'Register University';
+      }
+    });
+
+    function showMessage(text, type) {
+      messageDiv.textContent = text;
+      messageDiv.className = 'message ' + type;
+    }
+  </script>
+</body>
+</html>
