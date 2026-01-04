@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Verify Certificates</title>
+  <style>
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f5f5f5; margin: 0; padding: 0; }
+    .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff; padding: 18px 24px; display: flex; justify-content: space-between; align-items: center; }
+    .container { max-width: 960px; margin: 30px auto; background: #fff; padding: 24px; border-radius: 10px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); }
+    h1 { margin: 0; font-size: 22px; }
+    .tabs { display: flex; gap: 10px; margin-bottom: 16px; }
+    .tab { padding: 10px 14px; border-radius: 6px; border: 1px solid #ddd; background: #fafafa; cursor: pointer; }
+    .tab.active { background: #667eea; color: #fff; border-color: #667eea; }
+    .form-row { display: flex; gap: 10px; margin-bottom: 12px; align-items: center; }
+    input { padding: 10px; border: 1px solid #ddd; border-radius: 6px; flex: 1; }
+    button { padding: 10px 16px; border: none; border-radius: 6px; background: #667eea; color: #fff; cursor: pointer; }
+    button:disabled { opacity: 0.6; cursor: not-allowed; }
+    .message { padding: 10px; border-radius: 6px; margin-bottom: 12px; display: none; }
+    .message.error { display: block; background: #fee; color: #b00; }
+    .message.info { display: block; background: #e8f4ff; color: #0366d6; }
+    .result-card { border: 1px solid #eee; border-radius: 10px; padding: 16px; margin-top: 12px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
+    .label { font-weight: 600; color: #333; }
+    .mono { font-family: monospace; font-size: 12px; word-break: break-all; }
+    .logo { max-width: 120px; max-height: 120px; border: 1px solid #eee; border-radius: 6px; }
+    a.tx { color: #2e7d32; font-size: 12px; }
+    .section-title { font-weight: 700; margin: 8px 0; color: #444; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>🔍 Certificate Verification Portal</h1>
+    <div>Public access — no login needed</div>
+  </div>
+
+  <div class="container">
+    <div class="tabs">
+      <div class="tab active" id="tab-cert" onclick="switchTab('cert')">By Certificate ID</div>
+      <div class="tab" id="tab-user" onclick="switchTab('user')">By User ID</div>
+    </div>
+
+    <div id="message" class="message"></div>
+
+    <div id="form-cert">
+      <div class="form-row">
+        <input id="certIdInput" type="text" placeholder="Enter Certificate ID" />
+        <button id="btnCert" onclick="verifyCert()">Verify</button>
+      </div>
+    </div>
+
+    <div id="form-user" style="display:none;">
+      <div class="form-row">
+        <input id="userIdInput" type="text" placeholder="Enter User ID" />
+        <button id="btnUser" onclick="verifyUser()">Lookup</button>
+      </div>
+    </div>
+
+    <div id="results"></div>
+  </div>
+
+  <script>
+    function switchTab(tab) {
+      document.getElementById('tab-cert').classList.toggle('active', tab === 'cert');
+      document.getElementById('tab-user').classList.toggle('active', tab === 'user');
+      document.getElementById('form-cert').style.display = tab === 'cert' ? 'block' : 'none';
+      document.getElementById('form-user').style.display = tab === 'user' ? 'block' : 'none';
+      document.getElementById('results').innerHTML = '';
+      hideMessage();
+    }
+
+    function showMessage(text, type = 'info') {
+      const m = document.getElementById('message');
+      m.textContent = text;
+      m.className = 'message ' + type;
+    }
+    function hideMessage() { const m = document.getElementById('message'); m.className = 'message'; m.textContent = ''; }
+
+    async function verifyCert() {
+      const certId = document.getElementById('certIdInput').value.trim();
+      if (!certId) { showMessage('Enter a certificate ID', 'error'); return; }
+      disable('btnCert', true);
+      hideMessage();
+      document.getElementById('results').innerHTML = '';
+      try {
+        const res = await fetch(`/api/verify/certificate/${encodeURIComponent(certId)}`);
+        const data = await res.json();
+        if (!res.ok || !data.success) throw new Error(data.error || 'Verification failed');
+        renderCertResult(data.certificate, data.onchain);
+      } catch (err) {
+        showMessage(err.message, 'error');
+      } finally { disable('btnCert', false); }
+    }
+
+    async function verifyUser() {
+      const userId = document.getElementById('userIdInput').value.trim();
+      if (!userId) { showMessage('Enter a user ID', 'error'); return; }
+      disable('btnUser', true);
+      hideMessage();
+      document.getElementById('results').innerHTML = '';
+      try {
+        const res = await fetch(`/api/verify/user/${encodeURIComponent(userId)}`);
+        const data = await res.json();
+        if (!res.ok || !data.success) throw new Error(data.error || 'Lookup failed');
+        renderUserResults(data.student, data.certificates);
+      } catch (err) {
+        showMessage(err.message, 'error');
+      } finally { disable('btnUser', false); }
+    }
+
+    function disable(id, val) { const el = document.getElementById(id); if (el) { el.disabled = val; el.textContent = val ? 'Working...' : (id==='btnCert'?'Verify':'Lookup'); } }
+
+    let lastCert = null;
+    let userCerts = [];
+
+    function renderCertResult(cert, onchain) {
+      lastCert = cert;
+      const div = document.getElementById('results');
+      const txLink = cert.blockchain_tx_hash ? `<a class="tx" target="_blank" href="https://amoy.polygonscan.com/tx/${cert.blockchain_tx_hash}">${cert.blockchain_tx_hash}</a>` : '<span style="color:#f57c00">Pending</span>';
+      div.innerHTML = `
+        <div class="result-card">
+          <div class="section-title">Certificate</div>
+          <div class="grid">
+            <div><div class="label">Certificate ID</div><div class="mono">${cert.certificate_id}</div></div>
+            <div><div class="label">Title</div><div>${cert.certificate_title || cert.course}</div></div>
+            <div><div class="label">Course</div><div>${cert.course}</div></div>
+            <div><div class="label">Issued</div><div>${new Date(cert.issued_date).toLocaleDateString()}</div></div>
+            ${cert.expiry_date ? `<div><div class="label">Expiry</div><div>${new Date(cert.expiry_date).toLocaleDateString()}</div></div>` : ''}
+            ${cert.grade ? `<div><div class="label">Grade</div><div>${cert.grade}</div></div>` : ''}
+            <div><div class="label">TX Hash</div><div>${txLink}</div></div>
+          </div>
+
+          <div class="section-title">Student</div>
+          <div class="grid">
+            <div><div class="label">Name</div><div>${cert.student_name}</div></div>
+            <div><div class="label">Email</div><div>${cert.student_email}</div></div>
+            <div><div class="label">User ID</div><div class="mono">${cert.user_id}</div></div>
+          </div>
+
+          <div class="section-title">Institute</div>
+          <div class="grid">
+            <div><div class="label">Name</div><div>${cert.institute_name}</div></div>
+            <div><div class="label">Wallet</div><div class="mono">${cert.issuer_wallet}</div></div>
+            <div><div class="label">Logo</div><div>${cert.logo_url ? `<img class="logo" src="${cert.logo_url}" alt="logo">` : 'No logo'}</div></div>
+          </div>
+
+          <div class="section-title">On-chain</div>
+          <div>
+            ${onchain && onchain.checked ? renderOnchain(onchain) : '<span class="mono">Not checked</span>'}
+          </div>
+
+          <div style="margin-top:12px;">
+            <button onclick="openPrintableSingle()">Download / Print</button>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderOnchain(onchain) {
+      if (onchain.error) return `<span style="color:#b00">Error: ${onchain.error}</span>`;
+      if (!onchain.verified) return `<span style="color:#f57c00">Not found on-chain</span>`;
+      let cmp = '';
+      if (onchain.comparison && onchain.comparison.match !== undefined) {
+        cmp = onchain.comparison.match ? '<span style="color:#2e7d32">Data match</span>' : '<span style="color:#b00">Data mismatch</span>';
+      }
+      return `<span style="color:#2e7d32">Verified on-chain</span> ${cmp ? '— ' + cmp : ''}`;
+    }
+
+    function renderUserResults(student, certificates) {
+      const div = document.getElementById('results');
+      userCerts = certificates;
+      const certList = certificates.map(c => {
+        const txLink = c.blockchain_tx_hash ? `<a class="tx" target="_blank" href="https://amoy.polygonscan.com/tx/${c.blockchain_tx_hash}">${c.blockchain_tx_hash}</a>` : '<span style="color:#f57c00">Pending</span>';
+        return `
+          <div class="result-card">
+            <div class="grid">
+              <div><div class="label">Certificate</div><div class="mono">${c.certificate_id}</div></div>
+              <div><div class="label">Title</div><div>${c.certificate_title || c.course}</div></div>
+              <div><div class="label">Course</div><div>${c.course}</div></div>
+              <div><div class="label">Issued</div><div>${new Date(c.issued_date).toLocaleDateString()}</div></div>
+              ${c.expiry_date ? `<div><div class="label">Expiry</div><div>${new Date(c.expiry_date).toLocaleDateString()}</div></div>` : ''}
+              ${c.grade ? `<div><div class="label">Grade</div><div>${c.grade}</div></div>` : ''}
+              <div><div class="label">Institute</div><div>${c.institute_name}</div></div>
+              <div><div class="label">TX</div><div>${txLink}</div></div>
+            </div>
+            <div style="margin-top:10px;"><button onclick="openPrintableFromList(${certificates.indexOf(c)})">Download / Print</button></div>
+          </div>
+        `;
+      }).join('');
+
+      div.innerHTML = `
+        <div class="result-card">
+          <div class="section-title">Student</div>
+          <div class="grid">
+            <div><div class="label">Name</div><div>${student.full_name}</div></div>
+            <div><div class="label">Email</div><div>${student.email}</div></div>
+            <div><div class="label">User ID</div><div class="mono">${student.user_id}</div></div>
+            <div><div class="label">Gender</div><div>${student.gender || ''}</div></div>
+            <div><div class="label">Birthdate</div><div>${student.birthdate ? new Date(student.birthdate).toLocaleDateString() : ''}</div></div>
+          </div>
+          <div class="section-title">Certificates (${certificates.length})</div>
+          ${certificates.length ? certList : '<div>No certificates</div>'}
+        </div>
+      `;
+    }
+
+    function buildPrintableHTML(cert) {
+      return `
+        <html><head><title>Certificate ${cert.certificate_id}</title>
+        <style>
+          body { font-family: 'Segoe UI', sans-serif; padding:40px; background:#f7f7f7; }
+          .card { background:#fff; border:1px solid #ddd; padding:24px; border-radius:12px; max-width:800px; margin:0 auto; }
+          .header { display:flex; justify-content:space-between; align-items:center; }
+          .logo { max-height:80px; max-width:140px; }
+          h1 { margin:12px 0 4px 0; }
+          .mono { font-family: monospace; }
+        </style>
+        </head><body onload="window.print()">
+          <div class="card">
+            <div class="header">
+              <div>
+                <div style="color:#667eea; font-weight:700;">Certificate</div>
+                <h1>${cert.certificate_title || cert.course || ''}</h1>
+                <div style="color:#555;">${cert.institute_name || ''}</div>
+              </div>
+              ${cert.logo_url ? `<img class="logo" src="${cert.logo_url}" />` : ''}
+            </div>
+            <p style="margin-top:16px;">Awarded to <strong>${cert.student_name || cert.student_email || ''}</strong></p>
+            <p>Course: <strong>${cert.course || ''}</strong></p>
+            <p>Issued: ${cert.issued_date ? new Date(cert.issued_date).toLocaleDateString() : ''}</p>
+            ${cert.expiry_date ? `<p>Expiry: ${new Date(cert.expiry_date).toLocaleDateString()}</p>` : ''}
+            ${cert.grade ? `<p>Grade: ${cert.grade}</p>` : ''}
+            <p class="mono">Certificate ID: ${cert.certificate_id}</p>
+            ${cert.blockchain_tx_hash ? `<p class="mono">TX: ${cert.blockchain_tx_hash}</p>` : ''}
+          </div>
+        </body></html>`;
+    }
+
+    function openPrintableSingle() {
+      if (!lastCert) return;
+      const w = window.open('', '_blank');
+      w.document.write(buildPrintableHTML(lastCert));
+      w.document.close();
+    }
+
+    function openPrintableFromList(idx) {
+      const cert = userCerts[idx];
+      if (!cert) return;
+      const w = window.open('', '_blank');
+      w.document.write(buildPrintableHTML(cert));
+      w.document.close();
+    }
+  </script>
+</body>
+</html>

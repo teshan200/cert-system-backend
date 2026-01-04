@@ -278,7 +278,10 @@
             }
         }
 
+        let certCache = [];
+
         function displayCertificates(certificates) {
+            certCache = certificates;
             const container = document.getElementById('certificatesContainer');
 
             if (certificates.length === 0) {
@@ -292,7 +295,7 @@
             }
 
             container.className = 'certificates-grid';
-            container.innerHTML = certificates.map(cert => `
+            container.innerHTML = certificates.map((cert, idx) => `
                 <div class="certificate-card">
                     <div class="certificate-header">
                         <div>
@@ -332,9 +335,48 @@
                                                             <span style="font-size: 11px; color:#f57c00;">Pending (no tx hash yet)</span>
                                                         `}
                                                 </div>
+                            <div class="detail-item">
+                                <button style="margin-top:8px; padding:8px 10px; border:none; background:#667eea; color:#fff; border-radius:6px; cursor:pointer;" onclick="openPrintable(${idx})">Download</button>
+                            </div>
                     </div>
                 </div>
             `).join('');
+        }
+
+        function openPrintable(idx) {
+            const cert = certCache[idx];
+            if (!cert) return;
+            const html = `
+                <html><head><title>Certificate ${cert.certificate_id}</title>
+                <style>
+                    body { font-family: 'Segoe UI', sans-serif; padding:40px; }
+                    .card { border:1px solid #ddd; padding:24px; border-radius:12px; }
+                    .header { display:flex; justify-content:space-between; align-items:center; }
+                    .logo { max-height:80px; max-width:120px; }
+                    h1 { margin:12px 0 4px 0; }
+                    .mono { font-family: monospace; }
+                </style>
+                </head><body onload="window.print()">
+                    <div class="card">
+                        <div class="header">
+                            <div>
+                                <div style="color:#667eea; font-weight:700;">Certificate</div>
+                                <h1>${cert.certificate_title || cert.course}</h1>
+                                <div style="color:#555;">${cert.institute_name || ''}</div>
+                            </div>
+                            ${cert.logo_url ? `<img class="logo" src="${cert.logo_url}" />` : ''}
+                        </div>
+                        <p style="margin-top:16px;">Awarded to <strong>${cert.student_name || ''}</strong></p>
+                        <p>Course: <strong>${cert.course}</strong></p>
+                        <p>Issued: ${cert.issued_date ? new Date(cert.issued_date).toLocaleDateString() : ''}</p>
+                        ${cert.expiry_date ? `<p>Expiry: ${new Date(cert.expiry_date).toLocaleDateString()}</p>` : ''}
+                        ${cert.grade ? `<p>Grade: ${cert.grade}</p>` : ''}
+                        <p class="mono">Certificate ID: ${cert.certificate_id}</p>
+                    </div>
+                </body></html>`;
+            const w = window.open('', '_blank');
+            w.document.write(html.replace(/__CERT_PLACEHOLDER__/g, ''));
+            w.document.close();
         }
 
         // Load dashboard on page load

@@ -44,7 +44,8 @@ const Student = {
       SELECT 
         c.*,
         i.institute_name,
-        i.wallet_address as issuer_wallet
+        i.wallet_address as issuer_wallet,
+        i.logo_url
       FROM certificates c
       JOIN institutes i ON c.institute_id = i.institute_id
       WHERE c.user_id = ?

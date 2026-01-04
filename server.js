@@ -28,6 +28,7 @@ const universityRoutes = require('./routes/university');
 const adminRoutes = require('./routes/admin');
 const metamaskRoutes = require('./routes/metamask-routes');
 const paymentRoutes = require('./routes/payment');
+const verifyRoutes = require('./routes/verify');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/student', studentRoutes);
@@ -35,6 +36,7 @@ app.use('/api/university', universityRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/metamask', metamaskRoutes);
 app.use('/api/payment', paymentRoutes);
+app.use('/api/verify', verifyRoutes);
 
 // =========================================
 // FRONTEND ROUTES
@@ -80,6 +82,11 @@ app.get('/admin/dashboard', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'admin', 'dashboard.html'));
 });
 
+// Public verification page
+app.get('/verify', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'verify.html'));
+});
+
 // =========================================
 // HEALTH CHECK
 // =========================================
@@ -118,6 +125,7 @@ app.listen(PORT, () => {
   console.log(`   Student Portal: http://localhost:${PORT}/student/login`);
   console.log(`   University Portal: http://localhost:${PORT}/university/login`);
   console.log(`   Admin Panel: http://localhost:${PORT}/admin/login`);
+  console.log(`   Public Verify: http://localhost:${PORT}/verify`);
   console.log(`   Health Check: http://localhost:${PORT}/api/health`);
   console.log('=====================================\n');
 });
