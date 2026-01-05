@@ -212,6 +212,7 @@ body { background: #f6f8fb; color: #111827; min-height: 100vh; }
   padding: 1.125rem 1.25rem;
   box-shadow: 0 10px 30px rgba(17,24,39,0.08);
   margin-bottom: 1.125rem;
+  color: #2563eb;
 }
 
 .tab-group {

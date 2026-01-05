@@ -11,81 +11,111 @@
   <link rel="stylesheet" href="/css/utility.css">
   <style>
     body { font-family: 'Inter', sans-serif; }
-    .message { padding: 12px; border-radius: 5px; margin-bottom: 20px; font-size: 14px; display: none; }
-    .message.error { background-color: #fee; color: #c00; display: block; }
-    .message.success { background-color: #efe; color: #060; display: block; }
-    .loading { opacity: 0.6; cursor: not-allowed; }
-    .wallet-info { background-color: #f0f4ff; padding: 12px; border-radius: 5px; font-size: 12px; color: #667eea; margin-top: 10px; }
+    .message { padding: 12px; border-radius: 8px; margin-bottom: 20px; display: none; }
+    .message.success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+    .message.error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+    .message.show { display: block; }
+    .wallet-info { background: #eff6ff; padding: 12px; border-radius: 8px; border-left: 3px solid #2563eb; font-size: 13px; color: #1d4ed8; margin-top: 8px; }
+    .file-input { position: relative; }
+    .file-label { display: inline-block; padding: 8px 12px; background: #f3f4f6; border: 1px solid #d1d5db; border-radius: 6px; cursor: pointer; font-size: 13px; color: #4b5563; }
+    .file-input input[type="file"] { display: none; }
   </style>
 </head>
 <body class="hero flex items-center justify-center" style="min-height: 100vh; padding: 20px;">
-  <div class="card" style="max-width: 500px; width: 100%; overflow: hidden; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);">
-    <div class="hero text-center" style="padding: 40px 20px;">
-      <h1 class="text-3xl font-bold text-white mb-2">🏫 University Registration</h1>
-      <p class="text-sm text-white" style="opacity: 0.9;">Join our certificate verification network</p>
+  <div class="card" style="max-width: 550px; width: 100%; padding: 40px; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);">
+    <div class="text-center mb-8">
+      <h1 class="text-3xl font-bold text-primary mb-2">🏫 University Registration</h1>
+      <p class="text-sm text-gray-600">Join the Certificate Verification Network</p>
     </div>
 
-    <div style="padding: 40px;">
-      <div id="message" class="message"></div>
+    <div id="message" class="message"></div>
 
-      <form id="registrationForm" enctype="multipart/form-data">
-        <div class="mb-5">
-          <label for="institute_name" class="block mb-2 font-semibold text-sm">University/Institute Name *</label>
-          <input type="text" id="institute_name" name="institute_name" class="input" required>
-          <small class="block mt-1 text-gray-600 text-xs">Your official institution name</small>
+    <form id="registrationForm" enctype="multipart/form-data">
+      <div class="mb-5">
+        <label for="institute_name" class="block text-sm font-semibold mb-2">University/Institute Name *</label>
+        <input type="text" id="institute_name" name="institute_name" class="input" required placeholder="Your official institution name">
+        <small class="text-gray-600 text-xs mt-1 block">Your official institution name as recognized by accreditation bodies</small>
+      </div>
+
+      <div class="mb-5">
+        <label for="email" class="block text-sm font-semibold mb-2">Email Address *</label>
+        <input type="email" id="email" name="email" class="input" required placeholder="university@institution.edu">
+        <small class="text-gray-600 text-xs mt-1 block">Official university email address</small>
+      </div>
+
+      <div class="mb-5">
+        <label for="password" class="block text-sm font-semibold mb-2">Password *</label>
+        <input type="password" id="password" name="password" class="input" required placeholder="Min. 6 characters">
+        <small class="text-gray-600 text-xs mt-1 block">Must be at least 6 characters</small>
+      </div>
+
+      <div class="mb-5">
+        <label for="wallet_address" class="block text-sm font-semibold mb-2">Wallet Address (0x...) *</label>
+        <input type="text" id="wallet_address" name="wallet_address" class="input" placeholder="0x..." required>
+        <button type="button" class="btn btn-primary mt-3" id="btnConnectWallet" style="font-size: 13px; padding: 6px 12px;">Connect MetaMask to fill</button>
+        <div class="wallet-info">
+          💡 This will be your signing wallet for issuing certificates. Must be a valid Ethereum address.
         </div>
+      </div>
 
-        <div class="mb-5">
-          <label for="email" class="block mb-2 font-semibold text-sm">Email Address *</label>
-          <input type="email" id="email" name="email" class="input" required>
-          <small class="block mt-1 text-gray-600 text-xs">Official university email</small>
+      <div class="mb-5">
+        <label for="logo" class="block text-sm font-semibold mb-2">Institute Logo (PNG/JPG/WebP, max 5MB)</label>
+        <div class="file-input">
+          <label class="file-label" for="logo">Choose logo image</label>
+          <input type="file" id="logo" name="logo" accept="image/png, image/jpeg, image/jpg, image/webp, image/gif">
         </div>
+        <small class="text-gray-600 text-xs mt-1 block">Shown to admin and on certificates</small>
+      </div>
 
-        <div class="mb-5">
-          <label for="logo" class="block mb-2 font-semibold text-sm">Institute Logo (PNG/JPG/WebP, max 5MB)</label>
-          <input type="file" id="logo" name="logo" accept="image/png, image/jpeg, image/jpg, image/webp, image/gif" class="input">
-          <small class="block mt-1 text-gray-600 text-xs">Shown to admin during approval and on certificates</small>
+      <div class="mb-5">
+        <label for="verification_doc" class="block text-sm font-semibold mb-2">Verification Document (PDF/Image, max 5MB) *</label>
+        <div class="file-input">
+          <label class="file-label" for="verification_doc">Choose verification document</label>
+          <input type="file" id="verification_doc" name="verification_doc" accept="application/pdf, image/png, image/jpeg, image/jpg, image/webp" required>
         </div>
+        <small class="text-gray-600 text-xs mt-1 block">Proof of accreditation/authority. Required for admin approval</small>
+      </div>
 
-        <div class="form-group">
-          <label for="verification_doc">Verification Document (PDF or image, max 5MB)</label>
-          <input type="file" id="verification_doc" name="verification_doc" accept="application/pdf, image/png, image/jpeg, image/jpg, image/webp">
-          <small>Proof of accreditation/authority. Required for approval.</small>
-        </div>
+      <button type="submit" class="btn btn-primary w-full" id="submitBtn">Register University</button>
+    </form>
 
-        <div class="form-group">
-          <label for="password">Password *</label>
-          <input type="password" id="password" name="password" required>
-          <small>Minimum 6 characters</small>
-        </div>
-
-        <div class="form-group">
-          <label for="wallet_address">Wallet Address (0x...) *</label>
-          <input type="text" id="wallet_address" name="wallet_address" placeholder="0x..." required>
-          <button type="button" class="submit-btn" style="margin-top:10px; background:#17a2b8;" id="btnConnectWallet">Connect MetaMask to fill</button>
-          <div class="wallet-info">
-            💡 This will be your signing wallet for issuing certificates. Must be a valid Ethereum address. Use the button to pull it directly from your MetaMask account.
-          </div>
-        </div>
-
-        <button type="submit" class="submit-btn">Register University</button>
-
-        <div class="login-link">
-          Already registered? <a href="/university/login">Login here</a>
-        </div>
-      </form>
+    <div class="text-center mt-5 text-gray-600 text-sm">
+      Already registered? <a href="/university/login" class="text-primary font-semibold no-underline hover:underline">Login here</a>
     </div>
   </div>
 
   <script>
     const form = document.getElementById('registrationForm');
     const messageDiv = document.getElementById('message');
+    const submitBtn = document.getElementById('submitBtn');
     const walletInput = document.getElementById('wallet_address');
     const connectWalletBtn = document.getElementById('btnConnectWallet');
+    const logoInput = document.getElementById('logo');
+    const verificationDocInput = document.getElementById('verification_doc');
+    const logoLabel = document.querySelector('label[for="logo"]');
+    const verificationDocLabel = document.querySelector('label[for="verification_doc"]');
+
+    // Update file labels when files are selected
+    logoInput.addEventListener('change', (e) => {
+      if (e.target.files && e.target.files[0]) {
+        logoLabel.textContent = '✓ ' + e.target.files[0].name;
+      }
+    });
+
+    verificationDocInput.addEventListener('change', (e) => {
+      if (e.target.files && e.target.files[0]) {
+        verificationDocLabel.textContent = '✓ ' + e.target.files[0].name;
+      }
+    });
+
+    function showMessage(message, type) {
+      messageDiv.textContent = message;
+      messageDiv.className = `message ${type} show`;
+    }
 
     connectWalletBtn.addEventListener('click', async () => {
       if (!window.ethereum) {
-        showMessage('MetaMask not detected. Please install MetaMask.', 'error');
+        showMessage('❌ MetaMask not detected. Please install MetaMask.', 'error');
         return;
       }
 
@@ -95,12 +125,12 @@
         const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
         if (accounts && accounts[0]) {
           walletInput.value = accounts[0];
-          showMessage('Wallet address filled from MetaMask', 'success');
+          showMessage('✅ Wallet address filled from MetaMask', 'success');
         } else {
-          showMessage('No accounts returned from MetaMask', 'error');
+          showMessage('❌ No accounts returned from MetaMask', 'error');
         }
       } catch (err) {
-        showMessage('Failed to connect MetaMask: ' + err.message, 'error');
+        showMessage('❌ Failed to connect MetaMask: ' + err.message, 'error');
       } finally {
         connectWalletBtn.disabled = false;
         connectWalletBtn.textContent = 'Connect MetaMask to fill';
@@ -119,29 +149,27 @@
 
       // Validation
       if (!institute_name || !email || !password || !wallet_address) {
-        showMessage('All fields are required', 'error');
+        showMessage('❌ All required fields must be filled', 'error');
         return;
       }
 
       if (password.length < 6) {
-        showMessage('Password must be at least 6 characters', 'error');
+        showMessage('❌ Password must be at least 6 characters', 'error');
         return;
       }
 
       if (!wallet_address.startsWith('0x') || wallet_address.length !== 42) {
-        showMessage('Invalid wallet address format (should be 0x...)', 'error');
+        showMessage('❌ Invalid wallet address format (must be 0x...)', 'error');
         return;
       }
 
       if (!verification_doc) {
-        showMessage('Verification document is required for approval', 'error');
+        showMessage('❌ Verification document is required for approval', 'error');
         return;
       }
 
-      // Disable submit button
-      const btn = form.querySelector('.submit-btn');
-      btn.disabled = true;
-      btn.textContent = 'Registering...';
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Registering...';
 
       try {
         const formData = new FormData();
@@ -160,34 +188,29 @@
         const data = await response.json();
 
         if (!response.ok) {
-          showMessage(data.error || 'Registration failed', 'error');
-          btn.disabled = false;
-          btn.textContent = 'Register University';
+          showMessage('❌ ' + (data.error || 'Registration failed'), 'error');
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Register University';
           return;
         }
 
-        // Save token
+        // Save token and institute info
         localStorage.setItem('token', data.token);
         localStorage.setItem('institute_id', data.institute.institute_id);
         localStorage.setItem('institute_name', data.institute.institute_name);
 
-        showMessage(data.message + ' Redirecting to dashboard...', 'success');
+        showMessage('✅ ' + (data.message || 'Registration successful!') + ' Redirecting...', 'success');
 
-        // Redirect after 2 seconds
         setTimeout(() => {
           window.location.href = '/university/dashboard';
-        }, 2000);
+        }, 1500);
       } catch (error) {
-        showMessage('Network error: ' + error.message, 'error');
-        btn.disabled = false;
-        btn.textContent = 'Register University';
+        console.error('Error:', error);
+        showMessage('❌ Network error: ' + error.message, 'error');
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Register University';
       }
     });
-
-    function showMessage(text, type) {
-      messageDiv.textContent = text;
-      messageDiv.className = 'message ' + type;
-    }
   </script>
 </body>
 </html>

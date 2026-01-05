@@ -11,92 +11,49 @@
   <link rel="stylesheet" href="/css/utility.css">
   <style>
     body { font-family: 'Inter', sans-serif; }
-    .message { padding: 12px; border-radius: 5px; margin-bottom: 20px; font-size: 14px; display: none; }
-    .message.error { background-color: #fee; color: #c00; display: block; }
-    .message.success { background-color: #efe; color: #060; display: block; }
-    .approval-notice {
-      background-color: #fff3cd;
-      border: 1px solid #ffc107;
-      color: #856404;
-      padding: 12px;
-      border-radius: 5px;
-      margin-bottom: 20px;
-      font-size: 14px;
-    }
+    .message { padding: 12px; border-radius: 8px; margin-bottom: 20px; display: none; }
+    .message.success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+    .message.error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+    .message.show { display: block; }
   </style>
 </head>
 <body class="hero flex items-center justify-center" style="min-height: 100vh; padding: 20px;">
-  <div class="card" style="max-width: 400px; width: 100%; overflow: hidden; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);">
-    <div class="hero text-center" style="padding: 40px 20px;">
-      <h1 class="text-3xl font-bold text-white mb-2">🏫 University Login</h1>
-      <p class="text-sm text-white" style="opacity: 0.9;">Manage Your Institution's Certificates</p>
+  <div class="card" style="max-width: 450px; width: 100%; padding: 40px; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);">
+    <div class="text-center mb-8">
+      <h1 class="text-3xl font-bold text-primary mb-2">🏫 University Login</h1>
+      <p class="text-sm text-gray-600">Manage Your Institution's Certificates</p>
     </div>
 
-    <div style="padding: 40px;">
-      <div id="message" class="message"></div>
+    <div id="message" class="message"></div>
 
-      <form id="loginForm">
-        <div class="mb-5">
-          <label for="email" class="block mb-2 font-semibold text-sm">Email Address</label>
-          <input type="email" id="email" name="email" class="input" required>
-        </div>
-
-        <div class="mb-5">
-          <label for="password" class="block mb-2 font-semibold text-sm">Password</label>
-          <input type="password" id="password" name="password" class="input" required>
-        </div>
-
-        <button type="submit" class="btn btn-primary" id="submitBtn">Login</button>
-      </form>
-
-      <div class="text-center mt-5 pt-5 text-gray-600 text-sm" style="border-top: 1px solid #eee;">
-        Not registered yet? <a href="/university/register" class="text-primary font-semibold no-underline hover:underline">Register here</a>
-      </div>
-    </div>
-  </div>
-      border-radius: 5px;
-      margin-bottom: 20px;
-      font-size: 13px;
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <div class="header">
-      <h1>🏫 University Login</h1>
-      <p>Access your certificate dashboard</p>
-    </div>
-
-    <div class="form-content">
-      <div class="approval-notice" id="approvalNotice" style="display:none;">
-        ⏳ Your university is pending admin approval. You can log in once approved.
+    <form id="loginForm">
+      <div class="mb-5">
+        <label for="email" class="block text-sm font-semibold mb-2">Email Address</label>
+        <input type="email" id="email" name="email" class="input" required placeholder="university@email.com">
       </div>
 
-      <div id="message" class="message"></div>
+      <div class="mb-5">
+        <label for="password" class="block text-sm font-semibold mb-2">Password</label>
+        <input type="password" id="password" name="password" class="input" required placeholder="Enter your password">
+      </div>
 
-      <form id="loginForm">
-        <div class="form-group">
-          <label for="email">Email Address</label>
-          <input type="email" id="email" name="email" required>
-        </div>
+      <button type="submit" class="btn btn-primary w-full" id="submitBtn">Login</button>
+    </form>
 
-        <div class="form-group">
-          <label for="password">Password</label>
-          <input type="password" id="password" name="password" required>
-        </div>
-
-        <button type="submit" class="submit-btn">Login</button>
-
-        <div class="register-link">
-          Don't have an account? <a href="/university/register">Register here</a>
-        </div>
-      </form>
+    <div class="text-center mt-5 text-gray-600 text-sm">
+      Not registered yet? <a href="/university/register" class="text-primary font-semibold no-underline hover:underline">Register here</a>
     </div>
   </div>
 
   <script>
     const form = document.getElementById('loginForm');
     const messageDiv = document.getElementById('message');
+    const submitBtn = document.getElementById('submitBtn');
+
+    function showMessage(message, type) {
+      messageDiv.textContent = message;
+      messageDiv.className = `message ${type} show`;
+    }
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -105,13 +62,12 @@
       const password = document.getElementById('password').value;
 
       if (!email || !password) {
-        showMessage('Email and password required', 'error');
+        showMessage('❌ Email and password are required', 'error');
         return;
       }
 
-      const btn = form.querySelector('.submit-btn');
-      btn.disabled = true;
-      btn.textContent = 'Logging in...';
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Logging in...';
 
       try {
         const response = await fetch('/api/university/login', {
@@ -124,39 +80,29 @@
 
         const data = await response.json();
 
-        if (!response.ok) {
-          if (response.status === 403) {
-            // Show approval notice if pending
-            if (data.error.includes('pending')) {
-              document.getElementById('approvalNotice').style.display = 'block';
-            }
-          }
-          showMessage(data.error || 'Login failed', 'error');
-          btn.disabled = false;
-          btn.textContent = 'Login';
-          return;
+        if (response.ok) {
+          showMessage('✅ Login successful! Redirecting...', 'success');
+          
+          // Save token and institute info
+          localStorage.setItem('token', data.token);
+          localStorage.setItem('institute_id', data.institute.institute_id);
+          localStorage.setItem('institute_name', data.institute.institute_name);
+
+          setTimeout(() => {
+            window.location.href = '/university/dashboard';
+          }, 1000);
+        } else {
+          showMessage('❌ ' + (data.error || 'Login failed'), 'error');
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Login';
         }
-
-        // Save token and data
-        localStorage.setItem('token', data.token);
-        localStorage.setItem('institute_id', data.institute.institute_id);
-        localStorage.setItem('institute_name', data.institute.institute_name);
-
-        showMessage('Login successful! Redirecting...', 'success');
-        setTimeout(() => {
-          window.location.href = '/university/dashboard';
-        }, 1000);
       } catch (error) {
-        showMessage('Network error: ' + error.message, 'error');
-        btn.disabled = false;
-        btn.textContent = 'Login';
+        console.error('Error:', error);
+        showMessage('❌ Server error. Please try again.', 'error');
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Login';
       }
     });
-
-    function showMessage(text, type) {
-      messageDiv.textContent = text;
-      messageDiv.className = 'message ' + type;
-    }
   </script>
 </body>
 </html>
