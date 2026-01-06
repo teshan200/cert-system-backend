@@ -54,47 +54,6 @@
     </div>
   </div>
 
-    .back-link a:hover {
-      text-decoration: underline;
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <div class="header">
-      <h1>🔐 Admin Login</h1>
-      <p>Certificate System Administration</p>
-    </div>
-
-    <div class="form-content">
-      <div class="info-box">
-        💡 Default credentials for demo:<br>
-        Username: <strong>admin</strong><br>
-        Password: <strong>admin123</strong>
-      </div>
-
-      <div id="message" class="message"></div>
-
-      <form id="loginForm">
-        <div class="form-group">
-          <label for="username">Username</label>
-          <input type="text" id="username" name="username" required autofocus>
-        </div>
-
-        <div class="form-group">
-          <label for="password">Password</label>
-          <input type="password" id="password" name="password" required>
-        </div>
-
-        <button type="submit" class="submit-btn">Login</button>
-
-        <div class="back-link">
-          <a href="/">← Back to Home</a>
-        </div>
-      </form>
-    </div>
-  </div>
-
   <script>
     const form = document.getElementById('loginForm');
     const messageDiv = document.getElementById('message');
@@ -102,15 +61,15 @@
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
 
-      const username = document.getElementById('username').value.trim();
+      const adminId = document.getElementById('adminId').value.trim();
       const password = document.getElementById('password').value;
 
-      if (!username || !password) {
-        showMessage('Username and password required', 'error');
+      if (!adminId || !password) {
+        showMessage('Admin ID and password required', 'error');
         return;
       }
 
-      const btn = form.querySelector('.submit-btn');
+      const btn = document.getElementById('submitBtn');
       btn.disabled = true;
       btn.textContent = 'Logging in...';
 
@@ -120,7 +79,7 @@
           headers: {
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify({ username, password })
+          body: JSON.stringify({ username: adminId, password })
         });
 
         const data = await response.json();
