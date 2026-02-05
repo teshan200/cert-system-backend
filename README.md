@@ -33,11 +33,19 @@ npm install
 npm start
 ```
 
-### Add Gemini API Key (for AI features)
+### Environment Setup
 ```bash
-# Edit .env
-GEMINI_API_KEY=your_api_key_from_https://aistudio.google.com/app/apikey
+# Copy the example environment file
+cp .env.example .env
+
+# Edit .env and configure:
+# - Database credentials (MySQL)
+# - Blockchain settings (Polygon Amoy)
+# - JWT secrets
+# - Gemini API key for AI features
 ```
+
+Get your Gemini API key from: https://aistudio.google.com/app/apikey
 
 ### Test Endpoints
 ```bash
@@ -54,7 +62,80 @@ curl -X POST http://localhost:3001/api/student/career-insights \
 
 ---
 
-## 🔐 Authentication
+## � Setup & Configuration
+
+### Prerequisites
+- Node.js 18+ and npm
+- MySQL 8.0+
+- MetaMask browser extension (for blockchain features)
+- Gemini API key (for AI career insights)
+
+### Environment Configuration
+
+The project includes a `.env.example` file with all required configuration variables:
+
+```dotenv
+# Blockchain Configuration
+RPC_URL=https://rpc-amoy.polygon.technology
+RELAYER_PRIVATE_KEY=your_relayer_private_key_here
+CONTRACT_ADDRESS=your_contract_address_here
+
+# Database Configuration
+DB_HOST=localhost
+DB_PORT=3306
+DB_USER=root
+DB_PASSWORD=your_db_password_here
+DB_NAME=cert_verification_system
+
+# Server Configuration
+PORT=3001
+NODE_ENV=development
+
+# Security
+JWT_SECRET=your_jwt_secret_key_here
+SESSION_SECRET=your_session_secret_key_here
+
+# AI Integration
+GEMINI_API_KEY=your_gemini_api_key_here
+```
+
+### Database Setup
+
+1. Create MySQL database:
+```bash
+mysql -u root -p
+CREATE DATABASE cert_verification_system;
+```
+
+2. Import schema:
+```bash
+mysql -u root -p cert_verification_system < database/schema.sql
+```
+
+3. Seed admin user:
+```bash
+node seedAdmin.js
+# Default credentials: admin / admin123
+```
+
+### Installation & Running
+
+```bash
+# Install dependencies
+npm install
+
+# Start server (development)
+npm run dev
+
+# Start server (production)
+npm start
+```
+
+Server will run on `http://localhost:3001`
+
+---
+
+## �🔐 Authentication
 
 ### JWT Token
 All protected endpoints require JWT in Authorization header:
@@ -999,7 +1080,7 @@ Authorization: Bearer <token>
 ```
 
 **Features:**
-- ✅ Uses Google Gemini 1.5 Pro AI
+- ✅ Uses Google Gemini 2.5 Flash AI
 - ✅ Smart caching (returns cached unless regenerate=true)
 - ✅ Analyzes certificates, courses, grades
 - ✅ Generates realistic career matches (60-95%)
@@ -1059,8 +1140,23 @@ Authorization: Bearer <token>
   "expiry_date": "YYYY-MM-DD or null",
   "grade": "String",
   "blockchain_tx_hash": "0x... or null",
+  "blockchain_status": "pending|submitted|confirmed",
+  "blockchain_timestamp": "Timestamp or null",
   "blockchain_verified": "Boolean",
   "created_at": "Timestamp"
+}
+```
+
+### Career Path (AI-Generated)
+```json
+{
+  "id": "Integer (auto-increment)",
+  "user_id": "STU123456789",
+  "career_suggestions": "Text (JSON array)",
+  "skills_identified": "Text (JSON array)",
+  "recommended_courses": "Text (JSON array)",
+  "summary": "Text (career overview)",
+  "generated_at": "Timestamp"
 }
 ```
 
@@ -1329,7 +1425,9 @@ cert-system/
 │       │   ├── documents/   (University verification documents)
 │       │   └── logos/       (University logos)
 │       └── certificates/    (Certificate files)
-├── .env                # Environment variables
+├── .env                # Environment variables (create from .env.example)
+├── .env.example        # Environment template with all configuration options
+├── .gitignore          # Git ignore patterns
 ├── package.json        # Dependencies & scripts
 ├── server.js           # Main Express server
 ├── seedAdmin.js        # Admin user seeding script
@@ -1427,15 +1525,18 @@ PROVIDER_URL=https://rpc-amoy.polygon.technology
 
 ```json
 {
-  "@google/generative-ai": "^0.1.3",  // Gemini AI for Career Insights
-  "express": "^5.2.1",                // Web framework
-  "mysql2": "^3.7.0",                 // MySQL driver
-  "bcrypt": "^5.1.1",                 // Password hashing
-  "jsonwebtoken": "^9.0.2",           // JWT authentication
-  "dotenv": "^17.2.3",                // Environment variables
-  "multer": "^2.0.2",                 // File upload
-  "cors": "^2.8.5",                   // CORS middleware
-  "ethers": "^5.8.0"                  // Ethereum/Polygon interaction
+  "@google/generative-ai": "^0.24.1",  // Gemini AI 2.5 Flash for Career Insights
+  "express": "^5.2.1",                  // Web framework
+  "mysql2": "^3.7.0",                   // MySQL driver
+  "bcrypt": "^5.1.1",                   // Password hashing
+  "jsonwebtoken": "^9.0.2",             // JWT authentication
+  "dotenv": "^17.2.3",                  // Environment variables
+  "multer": "^2.0.2",                   // File upload
+  "cors": "^2.8.5",                     // CORS middleware
+  "ethers": "^5.8.0",                   // Ethereum/Polygon interaction
+  "uuid": "^9.0.1",                     // UUID generation
+  "papaparse": "^5.5.3",                // CSV parsing
+  "pdfkit": "^0.15.0"                   // PDF generation
 }
 ```
 
@@ -1518,7 +1619,7 @@ GEMINI_API_KEY=your-gemini-key
 | **Authentication** | JWT + bcrypt |
 | **Blockchain** | Polygon (Amoy Testnet), ethers.js |
 | **Smart Contract** | Solidity on Polygon |
-| **AI/ML** | Google Generative AI (Gemini 1.5 Pro) |
+| **AI/ML** | Google Generative AI (Gemini 2.5 Flash) |
 | **File Upload** | Multer |
 | **Environment** | dotenv |
 | **CORS** | CORS middleware |
@@ -1594,6 +1695,43 @@ curl -X POST http://localhost:3001/api/payment/issue-with-metamask \
     "signerAddress": "0x742d..."
   }'
 ```
+
+---
+
+## 🆕 Recent Changes & Enhancements
+
+### Latest Updates (February 2026)
+
+**Blockchain & Bulk Issuance Improvements:**
+- ✅ Enhanced bulk certificate issuance with better error handling
+- ✅ Added support for both camelCase and snake_case field names in bulk operations
+- ✅ Implemented automatic field normalization for certificate data
+- ✅ Added blockchain_status tracking (pending/submitted/confirmed)
+- ✅ Added blockchain_timestamp field to track blockchain submission time
+- ✅ Improved transaction status reporting with detailed gas usage metrics
+
+**Database Schema Updates:**
+- ✅ New `blockchain_status` field in certificates table (ENUM: pending, submitted, confirmed)
+- ✅ New `blockchain_timestamp` field to track when certificate was submitted to blockchain
+- ✅ New `summary` field in career_paths table for AI-generated career summaries
+
+**AI & Configuration:**
+- ✅ Upgraded Gemini AI from v0.1.3 to v0.24.1
+- ✅ Switched AI model from Gemini 1.5 Pro to Gemini 2.5 Flash for faster responses
+- ✅ Added `.env.example` file with complete configuration template
+- ✅ Added comprehensive `.gitignore` for better repository management
+
+**Code Quality & Maintenance:**
+- ✅ Removed unused database migration scripts (seed_admin.sql, update_institutes.sql)
+- ✅ Removed deprecated Institute model methods
+- ✅ Enhanced error logging and debugging output for bulk operations
+- ✅ Improved student dashboard with enhanced statistics
+
+**Documentation:**
+- ✅ Added comprehensive Setup & Configuration section
+- ✅ Updated API documentation with latest endpoints
+- ✅ Enhanced troubleshooting guide
+- ✅ Updated dependency versions and descriptions
 
 ---
 
