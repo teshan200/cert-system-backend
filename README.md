@@ -52,36 +52,6 @@ curl -X POST http://localhost:3001/api/student/career-insights \
 
 ---
 
-## ⚙️ Setup & Configuration
-
-### Environment Variables (.env)
-```dotenv
-# Server
-PORT=3001
-NODE_ENV=development
-
-# Database (MySQL)
-DB_HOST=localhost
-DB_PORT=3306
-DB_USER=root
-DB_PASSWORD=
-DB_NAME=cert_verification_system
-
-# Security
-JWT_SECRET=ABHe3oGyRh1EfsUq2ZnzQj0vVPiFLdtu
-SESSION_SECRET=WLJr5tywHnCqReM8auTNY21j0cPgVOsk
-
-# Blockchain
-RPC_URL=https://rpc-amoy.polygon.technology
-RELAYER_PRIVATE_KEY=your_private_key
-CONTRACT_ADDRESS=0x13660206fF34b48b07422a6658BfD93242b6a126
-
-# AI (Required for Career Insights)
-GEMINI_API_KEY=your_gemini_api_key_here
-```
-
----
-
 ## 🔐 Authentication
 
 ### JWT Token
