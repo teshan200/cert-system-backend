@@ -54,6 +54,7 @@ CREATE TABLE `career_paths` (
   `career_suggestions` text DEFAULT NULL,
   `skills_identified` text DEFAULT NULL,
   `recommended_courses` text DEFAULT NULL,
+  `summary` text DEFAULT NULL,
   `generated_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 

@@ -16,10 +16,12 @@
 5. [University API](#university-api)
 6. [Admin API](#admin-api)
 7. [Public Verify API](#public-verify-api)
-8. [AI Career Insights](#ai-career-insights) ⭐ NEW
-9. [Data Models](#data-models)
-10. [Error Handling](#error-handling)
-11. [Frontend Integration](#frontend-integration)
+8. [Payment API](#payment-api) ⭐ BLOCKCHAIN
+9. [MetaMask Integration API](#metamask-integration-api) ⭐ BLOCKCHAIN
+10. [AI Career Insights](#ai-career-insights) ⭐ NEW
+11. [Data Models](#data-models)
+12. [Error Handling](#error-handling)
+13. [Frontend Integration](#frontend-integration)
 
 ---
 
@@ -414,6 +416,155 @@ Authorization: Bearer <token>
 
 ---
 
+### 8. Get Certificate Signature Payload ⭐ Blockchain
+**POST** `/api/university/certificate/sign-payload`  
+**Auth:** Required
+
+**Request:**
+```json
+{
+  "student_id": "STU123456789",
+  "course_name": "Blockchain Fundamentals",
+  "grade": "A",
+  "issued_date": "2026-01-01"
+}
+```
+
+**Response (200):**
+```json
+{
+  "success": true,
+  "message_hash": "0x...",
+  "cert_id": "CERT123",
+  "message_to_sign": "Certificate data for signing"
+}
+```
+
+---
+
+### 9. Issue Certificate with Signature ⭐ Blockchain
+**POST** `/api/university/certificate/issue-signed`  
+**Auth:** Required
+
+**Request:**
+```json
+{
+  "certId": "CERT123",
+  "studentName": "John Doe",
+  "courseName": "Blockchain Fundamentals",
+  "issueDate": "2026-01-01",
+  "issuerName": "Tech University",
+  "messageHash": "0x...",
+  "signature": "0x...",
+  "signerAddress": "0x742d..."
+}
+```
+
+**Response (200):**
+```json
+{
+  "success": true,
+  "message": "Certificate issued on blockchain with signature",
+  "certificate": {
+    "certificate_id": "CERT123",
+    "blockchain_tx_hash": "0x...",
+    "blockNumber": 12345,
+    "gasUsed": "50000"
+  }
+}
+```
+
+---
+
+### 10. Get Bulk Authorization Message ⭐ Blockchain
+**POST** `/api/university/certificate/bulk-auth`  
+**Auth:** Required
+
+**Request:**
+```json
+{
+  "certificates": [
+    {
+      "student_id": "STU111",
+      "course_name": "Course A",
+      "grade": "A",
+      "issued_date": "2026-01-01"
+    },
+    {
+      "student_id": "STU222",
+      "course_name": "Course B",
+      "grade": "B",
+      "issued_date": "2026-01-01"
+    }
+  ]
+}
+```
+
+**Response (200):**
+```json
+{
+  "success": true,
+  "message_hash": "0x...",
+  "certCount": 2,
+  "message_to_sign": "Bulk certificate authorization message"
+}
+```
+
+---
+
+### 11. Bulk Issue with Single Signature ⭐ Blockchain
+**POST** `/api/university/certificate/bulk-issue-signed`  
+**Auth:** Required
+
+**Request:**
+```json
+{
+  "messageHash": "0x...",
+  "signature": "0x...",
+  "signerAddress": "0x742d...",
+  "certificates": [
+    {
+      "certId": "CERT123",
+      "studentName": "John Doe",
+      "courseName": "Course A",
+      "issueDate": "2026-01-01",
+      "issuerName": "Tech University"
+    },
+    {
+      "certId": "CERT124",
+      "studentName": "Jane Smith",
+      "courseName": "Course B",
+      "issueDate": "2026-01-01",
+      "issuerName": "Tech University"
+    }
+  ]
+}
+```
+
+**Response (200):**
+```json
+{
+  "success": true,
+  "successCount": 2,
+  "failureCount": 0,
+  "message": "Bulk certificates issued on blockchain",
+  "results": [
+    {
+      "certId": "CERT123",
+      "txHash": "0x...",
+      "success": true
+    },
+    {
+      "certId": "CERT124",
+      "txHash": "0x...",
+      "success": true
+    }
+  ]
+}
+```
+
+---
+
 ## 🔐 Admin API
 
 ### 1. Login
@@ -520,6 +671,141 @@ Authorization: Bearer <token>
 
 ---
 
+## 💳 Payment API (Blockchain Gas Management) ⭐
+
+### 1. Get Gas Cost
+**GET** `/api/payment/gas-cost`  
+**Auth:** Not required
+
+**Response (200):**
+```json
+{
+  "success": true,
+  "data": {
+    "wei": "1500000000000000",
+    "pol": "0.0015"
+  }
+}
+```
+
+---
+
+### 2. Get University Balance
+**GET** `/api/payment/balance?address=0x742d...`  
+**Auth:** Not required  
+**Query Parameters:**
+- `address` (required): Wallet address (0x + 40 hex chars)
+
+**Response (200):**
+```json
+{
+  "success": true,
+  "data": {
+    "address": "0x742d...",
+    "balanceWei": "5000000000000000000",
+    "balancePol": "5.0",
+    "gasSpentWei": "0",
+    "gasSpentPol": "0.0"
+  }
+}
+```
+
+---
+
+### 3. Issue Certificate with MetaMask Payment
+**POST** `/api/payment/issue-with-metamask`  
+**Auth:** Not required
+
+**Request:**
+```json
+{
+  "certId": "CERT123",
+  "studentName": "John Doe",
+  "courseName": "Blockchain Fundamentals",
+  "issueDate": "2026-01-01",
+  "issuerName": "Tech University",
+  "messageHash": "0x...",
+  "signature": "0x...",
+  "signerAddress": "0x742d..."
+}
+```
+
+**Response (200):**
+```json
+{
+  "success": true,
+  "message": "Certificate issued on-chain with prepaid gas",
+  "data": {
+    "certId": "CERT123",
+    "transactionHash": "0x...",
+    "blockNumber": 12345,
+    "gasUsed": "45000",
+    "status": 1
+  }
+}
+```
+
+**Errors:**
+- `400`: Missing required fields or message hash mismatch
+- `500`: Blockchain transaction failed
+
+---
+
+### 4. Bulk Issue with Payment
+**POST** `/api/payment/bulk-issue`  
+**Auth:** Not required
+
+**Request:**
+```json
+{
+  "signerAddress": "0x742d...",
+  "certificates": [
+    {
+      "certId": "CERT123",
+      "studentName": "John Doe",
+      "courseName": "Course A",
+      "issueDate": "2026-01-01",
+      "issuerName": "Tech University",
+      "messageHash": "0x...",
+      "signature": "0x..."
+    },
+    {
+      "certId": "CERT124",
+      "studentName": "Jane Smith",
+      "courseName": "Course B",
+      "issueDate": "2026-01-02",
+      "issuerName": "Tech University",
+      "messageHash": "0x...",
+      "signature": "0x..."
+    }
+  ]
+}
+```
+
+**Response (200):**
+```json
+{
+  "success": true,
+  "message": "Bulk issuance complete",
+  "data": [
+    {
+      "certId": "CERT123",
+      "txHash": "0x...",
+      "blockNumber": 12345,
+      "status": "success"
+    },
+    {
+      "certId": "CERT124",
+      "txHash": "0x...",
+      "blockNumber": 12346,
+      "status": "success"
+    }
+  ]
+}
+```
+
+---
+
 ## 🔓 Public Verify API (No Auth Required)
 
 ### 1. Verify by Certificate ID
@@ -564,7 +850,101 @@ Authorization: Bearer <token>
 
 ---
 
-## 🤖 AI Career Insights (NEW) ⭐
+## � MetaMask Integration API ⭐ Blockchain
+
+### 1. Issue Certificate with MetaMask
+**POST** `/api/certificates/issue-with-metamask`  
+**Auth:** Not required
+
+**Request:**
+```json
+{
+  "certId": "CERT123",
+  "studentName": "John Doe",
+  "courseName": "Blockchain Fundamentals",
+  "issueDate": "2026-01-01",
+  "issuerName": "Tech University",
+  "messageHash": "0x...",
+  "signature": "0x...",
+  "signerAddress": "0x742d...",
+  "universityId": "UNI456"
+}
+```
+
+**Process:**
+1. Frontend generates message hash from certificate data
+2. User signs with MetaMask wallet
+3. Backend verifies signature and submits to blockchain
+4. Certificate is stored in database with transaction hash
+
+**Response (200):**
+```json
+{
+  "success": true,
+  "message": "Certificate issued successfully",
+  "data": {
+    "certId": "CERT123",
+    "transactionHash": "0x...",
+    "blockNumber": 12345,
+    "gasUsed": "45000",
+    "status": 1
+  }
+}
+```
+
+**Errors:**
+- `400`: Missing required fields
+- `401`: Signature verification failed (address mismatch)
+- `500`: Blockchain transaction failed
+
+---
+
+### 2. Get MetaMask Status
+**GET** `/api/metamask/status`  
+**Auth:** Not required
+
+**Response (200):**
+```json
+{
+  "success": true,
+  "data": {
+    "installed": true,
+    "requiredChain": {
+      "id": 80002,
+      "name": "Polygon Amoy",
+      "rpc": "https://rpc-amoy.polygon.technology"
+    },
+    "contract": {
+      "address": "0x7d6159A7cBd7061AA231288651e750B5c5046343",
+      "network": "Polygon Amoy"
+    }
+  }
+}
+```
+
+**Usage:**
+- Verify MetaMask is installed on client
+- Confirm correct blockchain network (Polygon Amoy)
+- Get contract address for verification
+
+---
+
+### MetaMask Integration Flow
+
+```
+1. User clicks "Issue with MetaMask"
+2. Frontend prepares certificate data
+3. Backend generates message hash via /api/university/certificate/sign-payload
+4. Frontend requests MetaMask signature (user confirms)
+5. Frontend sends signature to /api/certificates/issue-with-metamask
+6. Backend verifies signature and submits to blockchain
+7. Certificate tx hash stored in database
+8. Frontend displays success with blockchain link
+```
+
+---
+
+## �🤖 AI Career Insights ⭐ NEW
 
 ### Get Career Analysis
 **POST** `/api/student/career-insights`  
@@ -774,7 +1154,77 @@ async function getCareerInsights() {
 }
 ```
 
-### JavaScript Fetch Example
+### MetaMask Integration Example
+
+```javascript
+// Check MetaMask and get config
+async function checkMetaMask() {
+  const response = await fetch('http://localhost:3001/api/metamask/status');
+  const { data } = await response.json();
+  
+  // Switch to Polygon Amoy if needed
+  if (window.ethereum) {
+    await window.ethereum.request({
+      method: 'wallet_switchEthereumChain',
+      params: [{ chainId: '0x' + data.requiredChain.id.toString(16) }]
+    });
+  }
+}
+
+// Issue certificate with MetaMask signature
+async function issueWithMetaMask(certificateData, signerAddress) {
+  // 1. Get message hash from backend
+  const hashResponse = await fetch('http://localhost:3001/api/university/certificate/sign-payload', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    },
+    body: JSON.stringify({
+      student_id: certificateData.studentId,
+      course_name: certificateData.courseName,
+      grade: certificateData.grade,
+      issued_date: certificateData.issueDate
+    })
+  });
+  
+  const { message_hash, cert_id } = await hashResponse.json();
+  
+  // 2. Request MetaMask signature
+  const signature = await window.ethereum.request({
+    method: 'personal_sign',
+    params: [message_hash, signerAddress]
+  });
+  
+  // 3. Submit signed certificate
+  const issueResponse = await fetch('http://localhost:3001/api/payment/issue-with-metamask', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      certId: cert_id,
+      studentName: certificateData.studentName,
+      courseName: certificateData.courseName,
+      issueDate: certificateData.issueDate,
+      issuerName: certificateData.issuerName,
+      messageHash: message_hash,
+      signature: signature,
+      signerAddress: signerAddress
+    })
+  });
+  
+  return await issueResponse.json();
+}
+
+// Get wallet balance
+async function getWalletBalance(address) {
+  const response = await fetch(`http://localhost:3001/api/payment/balance?address=${address}`);
+  const { data } = await response.json();
+  console.log(`Balance: ${data.balancePol} POL`);
+  return data;
+}
+```
+
+### JavaScript Fetch Example - Student Login
 
 ```javascript
 // Login
@@ -797,6 +1247,43 @@ const dashResponse = await fetch('http://localhost:3001/api/student/dashboard', 
 
 const dashboard = await dashResponse.json();
 console.log(dashboard);
+
+// Get Career Insights
+const insightsResponse = await fetch('http://localhost:3001/api/student/career-insights', {
+  method: 'POST',
+  headers: {
+    'Authorization': `Bearer ${token}`,
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({ regenerate: false })
+});
+
+const { insights } = await insightsResponse.json();
+console.log('Career Insights:', insights);
+```
+
+### Verify Certificate Example
+
+```javascript
+// Verify certificate publicly (no auth needed)
+async function verifyCertificate(certificateId) {
+  const response = await fetch(`http://localhost:3001/api/verify/certificate/${certificateId}`);
+  const { certificate, onchain } = await response.json();
+  
+  console.log('Certificate:', certificate);
+  console.log('Blockchain Verified:', onchain.verified);
+  return { certificate, onchain };
+}
+
+// Get all certificates of a student (public)
+async function getStudentCertificates(userId) {
+  const response = await fetch(`http://localhost:3001/api/verify/user/${userId}`);
+  const { student, certificates } = await response.json();
+  
+  console.log('Student:', student);
+  console.log('Certificates:', certificates);
+  return { student, certificates };
+}
 ```
 
 ---
@@ -805,29 +1292,134 @@ console.log(dashboard);
 
 ```
 cert-system/
-├── config/           # Database configuration
-├── controllers/      # Route controllers
-│   ├── studentController.js     (Student endpoints + AI Career Insights)
-│   ├── universityController.js  (University endpoints)
-│   ├── adminController.js       (Admin endpoints)
-│   └── authController.js        (Authentication)
-├── routes/          # Route definitions
-│   ├── student.js
-│   ├── university.js
-│   ├── admin.js
-│   └── auth.js
-├── models/          # Data models
+├── config/              # Configuration
+│   └── database.js      # MySQL database connection
+├── controllers/         # Route controllers
+│   ├── studentController.js      (Student endpoints + AI Career Insights)
+│   ├── universityController.js   (University endpoints + Blockchain signing)
+│   ├── adminController.js        (Admin endpoints)
+│   ├── authController.js         (Authentication)
+│   └── verifyController.js       (Public verification)
+├── routes/             # Route definitions
+│   ├── student.js               (Student endpoints)
+│   ├── university.js            (University endpoints)
+│   ├── admin.js                 (Admin endpoints)
+│   ├── auth.js                  (Authentication)
+│   ├── verify.js                (Public verify endpoints)
+│   ├── payment.js               (Payment & Gas management)
+│   └── metamask-routes.js       (MetaMask signature handling)
+├── models/             # Data models
 │   ├── Student.js
 │   ├── Institute.js
-│   └── Admin.js
-├── middleware/      # Middleware (auth, upload, etc)
-├── database/        # Database schemas
-├── utils/           # Utilities (blockchain, etc)
-├── public/          # Static files & uploads
-├── .env             # Environment configuration
-├── package.json     # Dependencies
-└── server.js        # Main server file
+│   ├── Admin.js
+│   └── Certificate.js
+├── middleware/         # Middleware
+│   ├── auth.js         (JWT verification, role-based access)
+│   └── upload.js       (File upload handling for logos/docs)
+├── database/           # Database schemas & seeds
+│   ├── schema.sql      (Main database schema)
+│   ├── cert_verification_system.sql
+│   ├── seed_admin.sql
+│   └── update_institutes.sql
+├── utils/              # Utilities
+│   └── blockchain.js   (Ethereum/Polygon contract interaction)
+├── public/             # Static files & file uploads
+│   └── uploads/
+│       ├── institutes/
+│       │   ├── documents/   (University verification documents)
+│       │   └── logos/       (University logos)
+│       └── certificates/    (Certificate files)
+├── .env                # Environment variables
+├── package.json        # Dependencies & scripts
+├── server.js           # Main Express server
+├── seedAdmin.js        # Admin user seeding script
+└── README.md           # This file
 ```
+
+---
+
+## 🔗 Blockchain Configuration
+
+### Supported Networks
+- **Polygon Amoy** (Testnet - Current)
+  - Chain ID: 80002
+  - RPC: https://rpc-amoy.polygon.technology
+  - Contract: 0x7d6159A7cBd7061AA231288651e750B5c5046343
+
+### Environment Variables for Blockchain
+```dotenv
+# Blockchain
+BLOCKCHAIN_NETWORK=polygon-amoy
+CONTRACT_ADDRESS=0x7d6159A7cBd7061AA231288651e750B5c5046343
+PRIVATE_KEY=your-private-key-for-relayer
+PROVIDER_URL=https://rpc-amoy.polygon.technology
+```
+
+---
+
+## � Complete API Reference
+
+### Authentication Endpoints
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| POST | `/api/auth/student/register` | No | Register new student |
+| POST | `/api/auth/student/login` | No | Student login |
+| GET | `/api/auth/student/profile` | Yes | Get student profile |
+| POST | `/api/admin/login` | No | Admin login |
+| GET | `/api/admin/profile` | Yes | Get admin profile |
+| POST | `/api/university/register` | No | Register university (multipart) |
+| POST | `/api/university/login` | No | University login |
+| GET | `/api/university/profile` | Yes | Get university profile |
+
+### Student Endpoints
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| GET | `/api/student/dashboard` | Yes | Get student dashboard |
+| GET | `/api/student/certificates` | Yes | List all certificates |
+| GET | `/api/student/certificates/:certificateId` | Yes | Get certificate details |
+| GET | `/api/student/certificates/:certificateId/verify` | Yes | Verify certificate on blockchain |
+| POST | `/api/student/career-insights` | Yes | Get AI career analysis (Gemini) |
+
+### University Endpoints
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| GET | `/api/university/dashboard` | Yes | University dashboard |
+| POST | `/api/university/certificate/issue` | Yes | Issue single certificate |
+| POST | `/api/university/certificates/bulk` | Yes | Bulk issue certificates |
+| GET | `/api/university/certificates` | Yes | List issued certificates |
+| POST | `/api/university/certificate/sign-payload` | Yes | Get message hash for signing |
+| POST | `/api/university/certificate/issue-signed` | Yes | Issue with signature |
+| POST | `/api/university/certificate/bulk-auth` | Yes | Get bulk auth message |
+| POST | `/api/university/certificate/bulk-issue-signed` | Yes | Bulk issue with signature |
+
+### Admin Endpoints
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| GET | `/api/admin/dashboard` | Yes | Admin dashboard |
+| GET | `/api/admin/institutes` | Yes | List all institutes |
+| GET | `/api/admin/institutes/pending` | Yes | List pending institutes |
+| GET | `/api/admin/institutes/:institute_id/issuer-status` | Yes | Check issuer status |
+| POST | `/api/admin/institutes/:institute_id/approve` | Yes | Approve institute |
+| POST | `/api/admin/institutes/:institute_id/reject` | Yes | Reject institute |
+| POST | `/api/admin/institutes/:institute_id/revoke` | Yes | Revoke institute |
+| GET | `/api/admin/statistics` | Yes | Get system statistics |
+| GET | `/api/admin/blockchain/status` | Yes | Get blockchain status |
+
+### Payment & Blockchain Endpoints
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| GET | `/api/payment/gas-cost` | No | Get gas cost per cert |
+| GET | `/api/payment/balance?address=0x...` | No | Get wallet balance |
+| POST | `/api/payment/issue-with-metamask` | No | Issue with MetaMask payment |
+| POST | `/api/payment/bulk-issue` | No | Bulk issue with payment |
+| POST | `/api/certificates/issue-with-metamask` | No | Issue with MetaMask sig |
+| GET | `/api/metamask/status` | No | Get MetaMask config |
+
+### Public Verification Endpoints
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| GET | `/api/verify/certificate/:certificateId` | No | Verify certificate |
+| GET | `/api/verify/user/:userId` | No | List user certificates |
 
 ---
 
@@ -836,14 +1428,14 @@ cert-system/
 ```json
 {
   "@google/generative-ai": "^0.1.3",  // Gemini AI for Career Insights
-  "express": "^5.2.1",
-  "mysql2": "^3.7.0",
-  "bcrypt": "^5.1.1",
-  "jsonwebtoken": "^9.0.2",
-  "dotenv": "^17.2.3",
-  "multer": "^2.0.2",
-  "cors": "^2.8.5",
-  "ethers": "^5.8.0"
+  "express": "^5.2.1",                // Web framework
+  "mysql2": "^3.7.0",                 // MySQL driver
+  "bcrypt": "^5.1.1",                 // Password hashing
+  "jsonwebtoken": "^9.0.2",           // JWT authentication
+  "dotenv": "^17.2.3",                // Environment variables
+  "multer": "^2.0.2",                 // File upload
+  "cors": "^2.8.5",                   // CORS middleware
+  "ethers": "^5.8.0"                  // Ethereum/Polygon interaction
 }
 ```
 
@@ -876,7 +1468,136 @@ GEMINI_API_KEY=your-gemini-key
 
 ---
 
-## 📞 Support
+## ✨ Key Features
+
+### 🎓 Student Features
+- **User Registration & Authentication**: Secure JWT-based login
+- **Certificate Dashboard**: View all issued certificates
+- **Blockchain Verification**: Verify certificates on Polygon blockchain
+- **AI Career Insights**: Get personalized career recommendations using Google Gemini AI
+- **Public Verification**: Share certificate link with anyone for verification
+
+### 🏫 University Features
+- **Institute Administration**: Manage certificate issuance
+- **Single Certificate Issuance**: Issue certificates one at a time
+- **Bulk Certificate Issuance**: Issue multiple certificates in one operation
+- **MetaMask Integration**: Sign certificates with MetaMask wallet
+- **Signature-Based Issuance**: Use cryptographic signatures for authorization
+- **Blockchain Submission**: Certificates recorded on Polygon blockchain
+- **Prepaid Gas Management**: Pay for blockchain transactions upfront
+
+### 👨‍💼 Admin Features
+- **Institute Management**: Approve/reject university registrations
+- **Blockchain Authorization**: Authorize institutes as valid issuers
+- **System Statistics**: Monitor total students, institutes, certificates
+- **Pending Review Queue**: Review pending institute applications
+- **Blockchain Status**: Check blockchain integration status
+
+### 🔐 Security Features
+- **JWT Token Authentication**: Secure API access with 7-day expiry
+- **Password Hashing**: bcrypt for secure password storage
+- **Blockchain Verification**: Tamper-proof certificate records
+- **Role-Based Access Control**: Different endpoints for students/universities/admins
+- **MetaMask Signature Verification**: Verify wallet ownership
+
+### 📊 Advanced Features
+- **AI-Powered Career Analysis**: Gemini AI analyzes certificates and suggests careers
+- **Polygon Blockchain**: Uses Polygon Amoy testnet for cost-effective transactions
+- **File Upload**: Support for institution logos and verification documents
+- **Prepaid Gas System**: Universities prepay for blockchain transactions
+- **Bulk Operations**: Batch issue multiple certificates with single signature
+
+---
+
+## 🚀 Technology Stack
+
+| Component | Technology |
+|-----------|-----------|
+| **Backend** | Node.js + Express.js |
+| **Database** | MySQL 8.0 |
+| **Authentication** | JWT + bcrypt |
+| **Blockchain** | Polygon (Amoy Testnet), ethers.js |
+| **Smart Contract** | Solidity on Polygon |
+| **AI/ML** | Google Generative AI (Gemini 1.5 Pro) |
+| **File Upload** | Multer |
+| **Environment** | dotenv |
+| **CORS** | CORS middleware |
+
+---
+
+## 🧪 Testing APIs with cURL
+
+### Register Student
+```bash
+curl -X POST http://localhost:3001/api/auth/student/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "full_name": "John Doe",
+    "email": "john@example.com",
+    "password": "password123",
+    "gender": "Male",
+    "birthdate": "2000-01-15"
+  }'
+```
+
+### Login Student
+```bash
+curl -X POST http://localhost:3001/api/auth/student/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "john@example.com",
+    "password": "password123"
+  }'
+```
+
+### Get Dashboard (with token)
+```bash
+curl -X GET http://localhost:3001/api/student/dashboard \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+```
+
+### Get Gas Cost
+```bash
+curl -X GET http://localhost:3001/api/payment/gas-cost
+```
+
+### Get Wallet Balance
+```bash
+curl -X GET "http://localhost:3001/api/payment/balance?address=0x742d35Cc6634C0532925a3b844Bc908e5c4e5e2f"
+```
+
+### Verify Certificate (Public)
+```bash
+curl -X GET http://localhost:3001/api/verify/certificate/CERT123456
+```
+
+### Get Career Insights
+```bash
+curl -X POST http://localhost:3001/api/student/career-insights \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"regenerate": false}'
+```
+
+### Issue Certificate with MetaMask
+```bash
+curl -X POST http://localhost:3001/api/payment/issue-with-metamask \
+  -H "Content-Type: application/json" \
+  -d '{
+    "certId": "CERT123",
+    "studentName": "John Doe",
+    "courseName": "Blockchain 101",
+    "issueDate": "2026-01-15",
+    "issuerName": "Tech University",
+    "messageHash": "0x...",
+    "signature": "0x...",
+    "signerAddress": "0x742d..."
+  }'
+```
+
+---
+
+## 📞 Support & Troubleshooting
 
 For issues or questions:
 1. Check error messages in response
@@ -884,6 +1605,27 @@ For issues or questions:
 3. Ensure JWT token is valid (not expired)
 4. Check database connectivity
 5. Review console logs on server
+
+### Common Issues
+
+| Issue | Solution |
+|-------|----------|
+| `ECONNREFUSED - Database connection failed` | Check MySQL is running and credentials in .env |
+| `"GEMINI_API_KEY not set"` | Add GEMINI_API_KEY to .env from aistudio.google.com |
+| `"MetaMask not detected"` | Install MetaMask browser extension |
+| `"Wrong blockchain network"` | Switch MetaMask to Polygon Amoy (Chain ID: 80002) |
+| `"Insufficient balance"` | Check wallet balance via /api/payment/balance |
+| `"Certificate not found on blockchain"` | Verify tx hash and wait for confirmation |
+
+### Debug Mode
+```bash
+# Run server with debug logging
+DEBUG=cert-system:* npm start
+
+# Check blockchain status
+curl http://localhost:3001/api/admin/blockchain/status \
+  -H "Authorization: Bearer ADMIN_TOKEN"
+```
 
 ---
 

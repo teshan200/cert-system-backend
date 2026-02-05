@@ -64,6 +64,7 @@ CREATE TABLE IF NOT EXISTS career_paths (
     career_suggestions TEXT,
     skills_identified TEXT,
     recommended_courses TEXT,
+    summary TEXT,
     generated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES students(user_id) ON DELETE CASCADE
 );
