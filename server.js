@@ -24,6 +24,9 @@ app.use('/uploads/institutes/logos', express.static('public/uploads/institutes/l
 // Private: documents (requires authentication)
 app.use('/uploads/institutes/documents', verifyToken, express.static('public/uploads/institutes/documents'));
 
+// Public: student profile photos and CVs (no auth required for public portfolios)
+app.use('/uploads/students', express.static('public/uploads/students'));
+
 // Protected API endpoint for documents (requires authentication)
 app.get('/api/files/:filename', verifyToken, (req, res) => {
   const filename = req.params.filename;
