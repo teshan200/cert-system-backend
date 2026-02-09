@@ -2,7 +2,7 @@
 
 **Version:** 2.0  
 **Status:** Production Ready  
-**Last Updated:** February 7, 2026  
+**Last Updated:** February 8, 2026  
 **Base URL:** `http://localhost:3001`
 
 ---
@@ -97,6 +97,23 @@ SESSION_SECRET=your_session_secret_key_here
 
 # AI Integration
 GEMINI_API_KEY=your_gemini_api_key_here
+
+
+# Email (SMTP)
+SMTP_HOST=mail.example.com
+SMTP_PORT=587
+SMTP_USER=your_smtp_username
+SMTP_PASS=your_smtp_password
+SMTP_SECURE=false
+SMTP_FROM=CertiChain <no-reply@example.com>
+
+# Public URLs for emails
+APP_URL=http://localhost:3001
+FRONTEND_URL=http://localhost:5173
+
+# Email verification
+REQUIRE_EMAIL_VERIFICATION=true
+EMAIL_VERIFICATION_TTL_HOURS=24
 ```
 
 ### Database Setup
@@ -148,6 +165,22 @@ Authorization: Bearer <token>
 - Format: Standard JWT with userId and role
 
 ---
+## Email Verification
+
+When `REQUIRE_EMAIL_VERIFICATION=true`, newly registered students and institutes must verify their email before login.
+
+**Behavior:**
+- Registration returns `verification_required: true` and does **not** include a JWT.
+- Login returns `403` with `verification_required: true` if the email is not verified.
+- Verification links expire after `EMAIL_VERIFICATION_TTL_HOURS`.
+
+**Verification Endpoints:**
+- `GET /api/auth/student/verify-email?token=...`
+- `POST /api/auth/student/resend-verification` (body: `{ "email": "..." }`)
+- `GET /api/university/verify-email?token=...`
+- `POST /api/university/resend-verification` (body: `{ "email": "..." }`)
+
+---
 
 ## 👨‍🎓 Student API
 
@@ -169,6 +202,20 @@ Authorization: Bearer <token>
 {
   "success": true,
   "token": "eyJhbGc...",
+  "student": {
+    "userId": "STU123456789",
+    "full_name": "John Doe",
+    "email": "john@example.com"
+  }
+}
+```
+
+**Response (201, verification required):**
+```json
+{
+  "success": true,
+  "verification_required": true,
+  "email_sent": true,
   "student": {
     "userId": "STU123456789",
     "full_name": "John Doe",
@@ -408,6 +455,22 @@ Authorization: Bearer <token>
 {
   "message": "Institute registered successfully. Awaiting admin approval.",
   "token": "eyJhbGc...",
+  "institute": {
+    "institute_id": "UNI456",
+    "institute_name": "Tech University",
+    "email": "admin@techuni.edu",
+    "logo_url": "/uploads/institutes/logos/logo-123.png",
+    "verification_doc_url": "/uploads/institutes/documents/doc-123.pdf"
+  }
+}
+```
+
+**Response (201, verification required):**
+```json
+{
+  "message": "Institute registered successfully. Verification email sent. Awaiting admin approval.",
+  "verification_required": true,
+  "email_sent": true,
   "institute": {
     "institute_id": "UNI456",
     "institute_name": "Tech University",
@@ -1688,6 +1751,7 @@ PROVIDER_URL=https://rpc-amoy.polygon.technology
   "mysql2": "^3.7.0",                   // MySQL driver
   "bcrypt": "^5.1.1",                   // Password hashing
   "jsonwebtoken": "^9.0.2",             // JWT authentication
+  "nodemailer": "^6.9.13",             // SMTP email
   "dotenv": "^17.2.3",                  // Environment variables
   "multer": "^2.0.2",                   // File upload
   "cors": "^2.8.5",                     // CORS middleware
@@ -1916,6 +1980,8 @@ For issues or questions:
 | `ECONNREFUSED - Database connection failed` | Check MySQL is running and credentials in .env |
 | `"GEMINI_API_KEY not set"` | Add GEMINI_API_KEY to .env from aistudio.google.com |
 | `"MetaMask not detected"` | Install MetaMask browser extension |
+| `"SMTP configuration missing"` | Set SMTP_HOST, SMTP_USER, SMTP_PASS, SMTP_FROM in .env |
+| `"Email not verified"` | Check inbox and click verification link or resend verification email |
 | `"Wrong blockchain network"` | Switch MetaMask to Polygon Amoy (Chain ID: 80002) |
 | `"Insufficient balance"` | Check wallet balance via /api/payment/balance |
 | `"Certificate not found on blockchain"` | Verify tx hash and wait for confirmation |
@@ -1934,4 +2000,4 @@ curl http://localhost:3001/api/admin/blockchain/status \
 
 **Status:** ✅ Production Ready  
 **Version:** 2.0  
-**Last Updated:** February 6, 2026
+**Last Updated:** February 8, 2026

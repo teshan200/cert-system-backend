@@ -7,12 +7,12 @@ class Institute {
   static async create(name, walletAddress, email, password_hash, logoUrl = null, verificationDocUrl = null) {
     try {
       const institute_id = 'INST' + Date.now() + uuidv4().substring(0, 8);
-      
+
       const query = `
         INSERT INTO institutes (institute_id, institute_name, wallet_address, email, password_hash, verification_status, logo_url, verification_doc_url)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
       `;
-      
+
       const result = await db.execute(query, [
         institute_id,
         name,
@@ -83,6 +83,37 @@ class Institute {
     } catch (error) {
       throw new Error(`Failed to check wallet: ${error.message}`);
     }
+  }
+
+  // Set email verification token
+  static async setEmailVerification(institute_id, tokenHash, expiresAt) {
+    const query = `
+      UPDATE institutes
+      SET email_verification_token = ?, email_verification_expires = ?, email_verified = 0
+      WHERE institute_id = ?
+    `;
+    await db.execute(query, [tokenHash, expiresAt, institute_id]);
+  }
+
+  // Find by verification token
+  static async findByVerificationToken(tokenHash) {
+    const query = `
+      SELECT institute_id, email, institute_name, email_verified, email_verification_expires
+      FROM institutes
+      WHERE email_verification_token = ?
+    `;
+    const [rows] = await db.execute(query, [tokenHash]);
+    return rows.length > 0 ? rows[0] : null;
+  }
+
+  // Mark email as verified
+  static async markEmailVerified(institute_id) {
+    const query = `
+      UPDATE institutes
+      SET email_verified = 1, email_verification_token = NULL, email_verification_expires = NULL
+      WHERE institute_id = ?
+    `;
+    await db.execute(query, [institute_id]);
   }
 
   // Get all pending institutes (for admin approval)

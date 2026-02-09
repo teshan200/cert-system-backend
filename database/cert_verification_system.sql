@@ -122,6 +122,9 @@ CREATE TABLE `institutes` (
   `email` varchar(255) NOT NULL,
   `password_hash` varchar(255) NOT NULL,
   `wallet_address` varchar(42) NOT NULL,
+  `email_verified` tinyint(1) DEFAULT 0,
+  `email_verification_token` varchar(64) DEFAULT NULL,
+  `email_verification_expires` datetime DEFAULT NULL,
   `verification_status` enum('pending','approved','rejected') DEFAULT 'pending',
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
@@ -149,6 +152,9 @@ CREATE TABLE `students` (
   `password_hash` varchar(255) NOT NULL,
   `gender` enum('Male','Female','Other') NOT NULL,
   `birthdate` date NOT NULL,
+  `email_verified` tinyint(1) DEFAULT 0,
+  `email_verification_token` varchar(64) DEFAULT NULL,
+  `email_verification_expires` datetime DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;

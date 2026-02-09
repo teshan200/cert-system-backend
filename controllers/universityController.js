@@ -6,11 +6,181 @@ const db = require('../config/database');
 const { v4: uuidv4 } = require('uuid');
 const blockchain = require('../utils/blockchain');
 const { ethers } = require('ethers');
+const { sendEmail } = require('../utils/mailer');
+const {
+  createVerificationToken,
+  hashToken,
+  buildVerificationUrl,
+  buildVerificationEmail,
+  renderVerificationPage
+} = require('../utils/emailVerification');
 
 // Simple Ethereum address validation
 function isValidEthAddress(address) {
   return /^0x[a-fA-F0-9]{40}$/.test(address);
 }
+
+const isEmailVerificationRequired = () => process.env.REQUIRE_EMAIL_VERIFICATION !== 'false';
+
+const sendInstituteVerificationEmail = async ({ name, email, token }) => {
+  const verifyUrl = buildVerificationUrl('/api/university/verify-email', token);
+  const { subject, html, text } = buildVerificationEmail({
+    name,
+    verifyUrl,
+    roleLabel: 'institute'
+  });
+  await sendEmail({ to: email, subject, html, text });
+};
+
+const getFrontendBaseUrl = () => {
+  const frontend = process.env.FRONTEND_URL;
+  return frontend ? frontend.replace(/\/$/, '') : '';
+};
+
+const getPublicVerifyUrl = (certificateId) => {
+  const frontendBase = getFrontendBaseUrl();
+  if (frontendBase) {
+    return `${frontendBase}/verify?certificateId=${encodeURIComponent(certificateId)}`;
+  }
+  const backend = process.env.APP_URL || `http://localhost:${process.env.PORT || 3001}`;
+  return `${backend.replace(/\/$/, '')}/api/verify/certificate/${encodeURIComponent(certificateId)}`;
+};
+
+const getCertificateDownloadUrl = (certificateId) => {
+  const frontendBase = getFrontendBaseUrl();
+  if (frontendBase) {
+    return `${frontendBase}/verify?certificateId=${encodeURIComponent(certificateId)}&download=1`;
+  }
+  return getPublicVerifyUrl(certificateId);
+};
+
+const getPortfolioUrl = (studentId) => {
+  const frontendBase = getFrontendBaseUrl();
+  if (!frontendBase || !studentId) {
+    return '';
+  }
+  return `${frontendBase}/portfolio/${encodeURIComponent(studentId)}`;
+};
+
+const getEmailLogoUrl = () => {
+  const logo = process.env.EMAIL_LOGO_URL;
+  return logo ? logo.trim() : '';
+};
+
+const sendCertificateIssuedEmail = async ({
+  to,
+  studentName,
+  studentId,
+  certificateId,
+  courseName,
+  instituteName,
+  issuedDate
+}) => {
+  const appName = process.env.APP_NAME || 'CertiChain';
+  const verifyUrl = getPublicVerifyUrl(certificateId);
+  const downloadUrl = getCertificateDownloadUrl(certificateId);
+  const portfolioUrl = getPortfolioUrl(studentId);
+  const logoUrl = getEmailLogoUrl();
+  const subject = `${appName} - Your certificate has been issued`;
+  const nameLine = studentName ? `Hi ${studentName},` : 'Hi,';
+  const supportEmail = process.env.SUPPORT_EMAIL
+    || `support@${appName.replace(/\s+/g, '').toLowerCase()}.com`;
+
+  const portfolioButton = portfolioUrl
+    ? `<a href="${portfolioUrl}" style="display:inline-block;background:#2563eb;color:#ffffff;padding:12px 20px;border-radius:10px;text-decoration:none;font-weight:600;">View Portfolio</a>`
+    : '';
+
+  const html = `
+  <div style="background:#f5f6fb;padding:24px 0;font-family:'Segoe UI', Arial, sans-serif;color:#111827;">
+    <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="max-width:640px;margin:0 auto;background:#ffffff;border-radius:20px;overflow:hidden;border:1px solid #e5e7eb;">
+      <tr>
+        <td style="background:linear-gradient(135deg,#6d28d9,#8b5cf6);padding:28px 32px;color:#fff;">
+          <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+            <tr>
+              <td style="vertical-align:middle;">
+                <h1 style="margin:0;font-size:22px;letter-spacing:0.2px;">${appName}</h1>
+                <p style="margin:6px 0 0;font-size:13px;opacity:0.9;">Certificate Issued</p>
+              </td>
+              <td style="text-align:right;vertical-align:middle;">
+                ${logoUrl ? `<img src="${logoUrl}" alt="${appName}" style="height:28px;max-width:140px;object-fit:contain;"/>` : ''}
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:28px 32px 8px;">
+          <h2 style="margin:0 0 8px;font-size:20px;">Congratulations!</h2>
+          <p style="margin:0 0 16px;font-size:14.5px;line-height:1.6;">${nameLine}<br/>Your certificate is now live and ready to verify or download.</p>
+          <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:14px;padding:16px;">
+            <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="font-size:14px;">
+              <tr>
+                <td style="padding:6px 0;color:#64748b;">Certificate ID</td>
+                <td style="padding:6px 0;font-weight:600;color:#111827;">${certificateId}</td>
+              </tr>
+              <tr>
+                <td style="padding:6px 0;color:#64748b;">Course</td>
+                <td style="padding:6px 0;font-weight:600;color:#111827;">${courseName}</td>
+              </tr>
+              <tr>
+                <td style="padding:6px 0;color:#64748b;">Institute</td>
+                <td style="padding:6px 0;font-weight:600;color:#111827;">${instituteName}</td>
+              </tr>
+              <tr>
+                <td style="padding:6px 0;color:#64748b;">Issued Date</td>
+                <td style="padding:6px 0;font-weight:600;color:#111827;">${issuedDate}</td>
+              </tr>
+            </table>
+          </div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:18px 32px 28px;">
+          <table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;">
+            <tr>
+              <td style="padding-bottom:12px;">
+                <a href="${verifyUrl}" style="display:inline-block;background:#7c3aed;color:#ffffff;padding:12px 20px;border-radius:10px;text-decoration:none;font-weight:600;">Verify Certificate</a>
+                <span style="display:inline-block;width:8px;"></span>
+                <a href="${downloadUrl}" style="display:inline-block;background:#111827;color:#ffffff;padding:12px 20px;border-radius:10px;text-decoration:none;font-weight:600;">Download PDF</a>
+                ${portfolioButton ? '<span style="display:inline-block;width:8px;"></span>' + portfolioButton : ''}
+              </td>
+            </tr>
+            <tr>
+              <td style="font-size:12px;color:#6b7280;line-height:1.5;">
+                If the buttons do not work, copy and paste this link into your browser:<br/>
+                <a href="${verifyUrl}" style="color:#6d28d9;word-break:break-all;">${verifyUrl}</a>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+      <tr>
+        <td style="background:#0f172a;color:#e2e8f0;padding:18px 32px;font-size:12px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div>${appName} - Secure blockchain certificate verification</div>
+            <div style="opacity:0.7;">Need help? ${supportEmail}</div>
+          </div>
+        </td>
+      </tr>
+    </table>
+  </div>
+  `;
+
+  const text = `${nameLine}
+
+Your certificate is now live.
+
+Certificate ID: ${certificateId}
+Course: ${courseName}
+Institute: ${instituteName}
+Issued Date: ${issuedDate}
+
+Verify: ${verifyUrl}
+Download: ${downloadUrl}${portfolioUrl ? `
+Portfolio: ${portfolioUrl}` : ''}
+`;
+  await sendEmail({ to, subject, html, text });
+};
 
 // Register new institute
 exports.registerInstitute = async (req, res) => {
@@ -35,8 +205,8 @@ exports.registerInstitute = async (req, res) => {
     }
 
     // Password validation
-    if (password.length < 6) {
-      return res.status(400).json({ error: 'Password must be at least 6 characters' });
+    if (password.length < 8) {
+      return res.status(400).json({ error: 'Password must be at least 8 characters' });
     }
 
     // Wallet validation (basic check)
@@ -73,6 +243,39 @@ exports.registerInstitute = async (req, res) => {
       logo_url,
       verification_doc_url
     );
+
+    const requiresVerification = isEmailVerificationRequired();
+    if (requiresVerification) {
+      const { token, tokenHash, expiresAt } = createVerificationToken();
+      await Institute.setEmailVerification(institute.institute_id, tokenHash, expiresAt);
+
+      let emailSent = true;
+      try {
+        await sendInstituteVerificationEmail({
+          name: institute.name,
+          email: institute.email,
+          token
+        });
+      } catch (err) {
+        console.error('Verification email error:', err.message);
+        emailSent = false;
+      }
+
+      return res.status(201).json({
+        message: emailSent
+          ? 'Institute registered successfully. Verification email sent. Awaiting admin approval.'
+          : 'Institute registered successfully. Verification email failed to send. Awaiting admin approval.',
+        verification_required: true,
+        email_sent: emailSent,
+        institute: {
+          institute_id: institute.institute_id,
+          institute_name: institute.name,
+          email: institute.email,
+          logo_url,
+          verification_doc_url
+        }
+      });
+    }
 
     // Generate JWT
     const token = jwt.sign(
@@ -115,6 +318,13 @@ exports.loginInstitute = async (req, res) => {
     const institute = await Institute.findByEmail(email);
     if (!institute) {
       return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    if (isEmailVerificationRequired() && !institute.email_verified) {
+      return res.status(403).json({
+        error: 'Email not verified. Please check your inbox.',
+        verification_required: true
+      });
     }
 
     // Check if approved
@@ -198,7 +408,8 @@ exports.getDashboard = async (req, res) => {
 exports.searchStudents = async (req, res) => {
   try {
     const rawQuery = (req.query.query || '').trim();
-    const limit = Math.min(parseInt(req.query.limit, 10) || 10, 25);
+    const requestedLimit = Number.parseInt(req.query.limit, 10);
+    const limit = Number.isFinite(requestedLimit) ? Math.min(requestedLimit, 25) : 10;
 
     if (rawQuery.length < 3) {
       return res.json({ success: true, students: [] });
@@ -210,10 +421,10 @@ exports.searchStudents = async (req, res) => {
       FROM students
       WHERE user_id LIKE ? OR full_name LIKE ? OR email LIKE ?
       ORDER BY full_name ASC
-      LIMIT ?
+      LIMIT ${limit}
     `;
 
-    const [rows] = await db.execute(searchQuery, [like, like, like, limit]);
+    const [rows] = await db.execute(searchQuery, [like, like, like]);
 
     res.json({
       success: true,
@@ -235,7 +446,7 @@ exports.issueCertificate = async (req, res) => {
     }
 
     // Check if student exists
-    const studentQuery = 'SELECT full_name FROM students WHERE user_id = ?';
+    const studentQuery = 'SELECT full_name, email FROM students WHERE user_id = ?';
     const [studentRows] = await db.execute(studentQuery, [student_id]);
     if (studentRows.length === 0) {
       return res.status(404).json({ error: 'Student not found' });
@@ -286,6 +497,22 @@ exports.issueCertificate = async (req, res) => {
       blockchainResult.transactionHash ?? null
     ]);
 
+    if (studentRows[0]?.email) {
+      try {
+        await sendCertificateIssuedEmail({
+          to: studentRows[0].email,
+          studentName: studentRows[0].full_name,
+          studentId: student_id,
+          certificateId: certificate_id,
+          courseName: course_name,
+          instituteName: issuerName,
+          issuedDate: issued_date
+        });
+      } catch (emailErr) {
+        console.error('Certificate email error:', emailErr.message);
+      }
+    }
+
     res.status(201).json({
       message: 'Certificate issued successfully on blockchain!',
       certificate: {
@@ -318,7 +545,7 @@ exports.getCertificateSignaturePayload = async (req, res) => {
     }
 
     // Fetch student
-    const [studentRows] = await db.execute('SELECT full_name FROM students WHERE user_id = ?', [student_id]);
+    const [studentRows] = await db.execute('SELECT full_name, email FROM students WHERE user_id = ?', [student_id]);
     if (studentRows.length === 0) {
       return res.status(404).json({ error: 'Student not found' });
     }
@@ -385,7 +612,7 @@ exports.issueCertificateWithSignature = async (req, res) => {
     }
 
     // Fetch student
-    const [studentRows] = await db.execute('SELECT full_name FROM students WHERE user_id = ?', [student_id]);
+    const [studentRows] = await db.execute('SELECT full_name, email FROM students WHERE user_id = ?', [student_id]);
     if (studentRows.length === 0) {
       return res.status(404).json({ error: 'Student not found' });
     }
@@ -447,6 +674,22 @@ exports.issueCertificateWithSignature = async (req, res) => {
       grade ?? null,
       txResult.txHash ?? null
     ]);
+
+    if (studentRows[0]?.email) {
+      try {
+        await sendCertificateIssuedEmail({
+          to: studentRows[0].email,
+          studentName: studentRows[0].full_name,
+          studentId: student_id,
+          certificateId: certificate_id,
+          courseName: course_name,
+          instituteName: instRows[0].institute_name || 'Unknown',
+          issuedDate: issued_date
+        });
+      } catch (emailErr) {
+        console.error('Certificate email error:', emailErr.message);
+      }
+    }
 
     res.status(201).json({
       message: 'Certificate issued successfully (MetaMask-signed, relayer-submitted)',
@@ -702,7 +945,7 @@ exports.bulkIssueWithSingleSignature = async (req, res) => {
         // Get student name if not provided
         if (!studentName_normalized && student_id) {
           console.log(`   🔍 Fetching student name for ${student_id}...`);
-          const [sRows] = await db.execute('SELECT full_name FROM students WHERE user_id = ?', [student_id]);
+          const [sRows] = await db.execute('SELECT full_name, email FROM students WHERE user_id = ?', [student_id]);
           if (sRows.length > 0) {
             studentName_normalized = sRows[0].full_name;
             console.log(`   ✓ Found: ${studentName_normalized}`);
@@ -791,6 +1034,25 @@ exports.bulkIssueWithSingleSignature = async (req, res) => {
           blockchainStatus,
           blockchainTimestamp
         ]);
+
+        if (student_id) {
+          try {
+            const [emailRows] = await db.execute('SELECT email, full_name FROM students WHERE user_id = ?', [student_id]);
+            if (emailRows.length > 0 && emailRows[0].email) {
+              await sendCertificateIssuedEmail({
+                to: emailRows[0].email,
+                studentName: emailRows[0].full_name,
+                studentId: student_id,
+                certificateId: certId_normalized,
+                courseName: courseName_normalized,
+                instituteName: issuerName_normalized,
+                issuedDate: issueDate_normalized
+              });
+            }
+          } catch (emailErr) {
+            console.error('Certificate email error:', emailErr.message);
+          }
+        }
 
         console.log(`   ✓ Database updated successfully`);
 
@@ -893,7 +1155,7 @@ exports.bulkIssueCertificates = async (req, res) => {
         }
 
         // Check if student exists
-        const studentQuery = 'SELECT full_name FROM students WHERE user_id = ?';
+        const studentQuery = 'SELECT full_name, email FROM students WHERE user_id = ?';
         const [studentRows] = await db.execute(studentQuery, [student_id]);
         if (studentRows.length === 0) {
           errors.push({
@@ -924,6 +1186,25 @@ exports.bulkIssueCertificates = async (req, res) => {
           'pending_blockchain'
         ]);
 
+        try {
+          const [emailRows] = await db.execute('SELECT email, full_name FROM students WHERE user_id = ?', [student_id]);
+          if (emailRows.length > 0 && emailRows[0].email) {
+            const [instRows] = await db.execute('SELECT institute_name FROM institutes WHERE institute_id = ?', [req.user.institute_id]);
+            const instituteName = instRows[0]?.institute_name || 'Unknown';
+            await sendCertificateIssuedEmail({
+              to: emailRows[0].email,
+              studentName: emailRows[0].full_name,
+              studentId: student_id,
+              certificateId: certificate_id,
+              courseName: course_name,
+              instituteName,
+              issuedDate: issued_date
+            });
+          }
+        } catch (emailErr) {
+          console.error('Certificate email error:', emailErr.message);
+        }
+
         results.push({
           index: i,
           certificate_id,
@@ -951,5 +1232,86 @@ exports.bulkIssueCertificates = async (req, res) => {
   } catch (error) {
     console.error('Bulk upload error:', error);
     res.status(500).json({ error: error.message });
+  }
+};
+
+// Verify institute email
+exports.verifyInstituteEmail = async (req, res) => {
+  try {
+    const { token } = req.query;
+    if (!token) {
+      return res.status(400).send(renderVerificationPage({
+        success: false,
+        message: 'Missing verification token.'
+      }));
+    }
+
+    const tokenHash = hashToken(token);
+    const institute = await Institute.findByVerificationToken(tokenHash);
+
+    if (!institute) {
+      return res.status(400).send(renderVerificationPage({
+        success: false,
+        message: 'Invalid or expired verification link.'
+      }));
+    }
+
+    if (institute.email_verified) {
+      return res.send(renderVerificationPage({
+        success: true,
+        message: 'Email already verified.'
+      }));
+    }
+
+    if (institute.email_verification_expires && new Date(institute.email_verification_expires) < new Date()) {
+      return res.status(400).send(renderVerificationPage({
+        success: false,
+        message: 'Verification link expired. Please request a new link.'
+      }));
+    }
+
+    await Institute.markEmailVerified(institute.institute_id);
+
+    return res.send(renderVerificationPage({
+      success: true,
+      message: 'Email verified successfully. You can log in now.'
+    }));
+  } catch (error) {
+    console.error('Verify email error:', error);
+    return res.status(500).send(renderVerificationPage({
+      success: false,
+      message: 'Server error while verifying email.'
+    }));
+  }
+};
+
+// Resend institute verification email
+exports.resendInstituteVerification = async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({ error: 'Email is required' });
+    }
+
+    const institute = await Institute.findByEmail(email);
+    if (!institute) {
+      return res.status(404).json({ error: 'Institute not found' });
+    }
+
+    if (institute.email_verified) {
+      return res.status(400).json({ error: 'Email already verified' });
+    }
+
+    const { token, tokenHash, expiresAt } = createVerificationToken();
+    await Institute.setEmailVerification(institute.institute_id, tokenHash, expiresAt);
+    await sendInstituteVerificationEmail({ name: institute.institute_name, email: institute.email, token });
+
+    return res.json({
+      success: true,
+      message: 'Verification email sent.'
+    });
+  } catch (error) {
+    console.error('Resend verification error:', error);
+    return res.status(500).json({ error: 'Server error while sending verification email' });
   }
 };

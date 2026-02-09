@@ -15,6 +15,8 @@ router.post(
 	universityController.registerInstitute
 );
 router.post('/login', universityController.loginInstitute);
+router.get('/verify-email', universityController.verifyInstituteEmail);
+router.post('/resend-verification', universityController.resendInstituteVerification);
 
 // Protected routes (require university authentication)
 router.get('/profile', verifyToken, verifyUniversity, universityController.getProfile);
