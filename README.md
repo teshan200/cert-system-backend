@@ -110,6 +110,12 @@ npm run dev
 
 ---
 
+## Smart Contract
+
+Contract docs and signing details are in [contracts/README.md](contracts/README.md).
+
+---
+
 ## Team
 
 - Teshan Pamodya
