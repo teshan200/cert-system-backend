@@ -65,6 +65,7 @@ const adminRoutes = require('./routes/admin');
 const metamaskRoutes = require('./routes/metamask-routes');
 const paymentRoutes = require('./routes/payment');
 const verifyRoutes = require('./routes/verify');
+const contactRoutes = require('./routes/contact');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/student', studentRoutes);
@@ -73,6 +74,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/metamask', metamaskRoutes);
 app.use('/api/payment', paymentRoutes);
 app.use('/api/verify', verifyRoutes);
+app.use('/api/contact', contactRoutes);
 
 // =========================================
 // HEALTH CHECK
@@ -114,6 +116,7 @@ app.listen(PORT, () => {
   console.log(`   University: http://localhost:${PORT}/api/university/*`);
   console.log(`   Admin: http://localhost:${PORT}/api/admin/*`);
   console.log(`   Verify: http://localhost:${PORT}/api/verify/*`);
+  console.log(`   Contact: http://localhost:${PORT}/api/contact/*`);
   console.log(`   Health Check: http://localhost:${PORT}/api/health`);
   console.log('=====================================\n');
 });
