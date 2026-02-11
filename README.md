@@ -10,18 +10,21 @@
 ## 📖 Table of Contents
 
 1. [Quick Start](#quick-start)
-2. [Setup & Configuration](#setup--configuration)
-3. [Authentication](#authentication)
-4. [Student API](#student-api)
-5. [University API](#university-api)
-6. [Admin API](#admin-api)
-7. [Public Verify API](#public-verify-api)
-8. [Payment API](#payment-api) ⭐ BLOCKCHAIN
-9. [MetaMask Integration API](#metamask-integration-api) ⭐ BLOCKCHAIN
-10. [AI Career Insights](#ai-career-insights) ⭐ NEW
-11. [Data Models](#data-models)
-12. [Error Handling](#error-handling)
-13. [Frontend Integration](#frontend-integration)
+2. [Setup Instructions](#setup-instructions)
+3. [Tech Stack](#tech-stack)
+4. [Team](#team)
+5. [Setup & Configuration](#setup--configuration)
+6. [Authentication](#authentication)
+7. [Student API](#student-api)
+8. [University API](#university-api)
+9. [Admin API](#admin-api)
+10. [Public Verify API](#public-verify-api)
+11. [Payment API](#payment-api) ⭐ BLOCKCHAIN
+12. [MetaMask Integration API](#metamask-integration-api) ⭐ BLOCKCHAIN
+13. [AI Career Insights](#ai-career-insights) ⭐ NEW
+14. [Data Models](#data-models)
+15. [Error Handling](#error-handling)
+16. [Frontend Integration](#frontend-integration)
 
 ---
 
@@ -62,7 +65,67 @@ curl -X POST http://localhost:3001/api/student/career-insights \
 
 ---
 
-## � Setup & Configuration
+## Setup Instructions
+
+1. Install dependencies:
+```bash
+npm install
+```
+
+2. Configure environment:
+```bash
+cp .env.example .env
+```
+Update `.env` with your MySQL credentials, blockchain settings, JWT secrets, and Gemini API key.
+
+3. Initialize database:
+```bash
+mysql -u root -p
+CREATE DATABASE cert_verification_system;
+```
+```bash
+mysql -u root -p cert_verification_system < database/schema.sql
+```
+
+4. Seed admin user:
+```bash
+node seedAdmin.js
+```
+
+5. Run the server:
+```bash
+npm run dev
+```
+
+---
+
+## Tech Stack
+
+- Backend: Node.js, Express.js
+- Database: MySQL
+- Blockchain: Polygon (Amoy), MetaMask, smart contract integration
+- Auth: JWT, sessions
+- AI: Gemini API (career insights)
+- Email: SMTP
+
+---
+
+## Smart Contract
+
+Contract docs and signing details are in [contracts/README.md](contracts/README.md).
+
+---
+
+## Team
+
+- Teshan Pamodya
+- Kavindu Lakshan
+- Chamath Theekshana
+- Thamindu Keshan
+
+---
+
+## Setup & Configuration
 
 ### Prerequisites
 - Node.js 18+ and npm
@@ -152,7 +215,7 @@ Server will run on `http://localhost:3001`
 
 ---
 
-## �🔐 Authentication
+## Authentication
 
 ### JWT Token
 All protected endpoints require JWT in Authorization header:
