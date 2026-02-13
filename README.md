@@ -21,6 +21,10 @@ Base URL: `http://localhost:3001`
 13. [Team](#team)
 14. [Troubleshooting](#troubleshooting)
 
+## Documentation Links
+- Full API documentation: [`API_DOCUMENTATION.md`](API_DOCUMENTATION.md)
+- Smart contract documentation: [`contracts/README.md`](contracts/README.md)
+
 ## Overview
 This backend powers a blockchain-based certificate platform with:
 - Role-based auth for students, universities, and admins
