@@ -10,7 +10,38 @@ const app = express();
 // =========================================
 // MIDDLEWARE
 // =========================================
-app.use(cors());
+const envFrontendOrigin = (process.env.FRONTEND_URL || '').trim();
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://localhost:3000',
+  ...(envFrontendOrigin ? [envFrontendOrigin] : [])
+];
+
+const corsOptions = {
+  origin: (origin, callback) => {
+    // Allow non-browser clients (curl, Postman, server-to-server)
+    if (!origin) {
+      return callback(null, true);
+    }
+
+    // In development, allow all
+    if (process.env.NODE_ENV !== 'production' || allowedOrigins.length === 0) {
+      return callback(null, true);
+    }
+
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+
+    return callback(new Error('Not allowed by CORS'));
+  },
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
+};
+
+app.use(cors(corsOptions));
+app.options(/.*/, cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -65,6 +96,7 @@ const adminRoutes = require('./routes/admin');
 const metamaskRoutes = require('./routes/metamask-routes');
 const paymentRoutes = require('./routes/payment');
 const verifyRoutes = require('./routes/verify');
+const contactRoutes = require('./routes/contact');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/student', studentRoutes);
@@ -73,6 +105,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/metamask', metamaskRoutes);
 app.use('/api/payment', paymentRoutes);
 app.use('/api/verify', verifyRoutes);
+app.use('/api/contact', contactRoutes);
 
 // =========================================
 // HEALTH CHECK
@@ -114,6 +147,7 @@ app.listen(PORT, () => {
   console.log(`   University: http://localhost:${PORT}/api/university/*`);
   console.log(`   Admin: http://localhost:${PORT}/api/admin/*`);
   console.log(`   Verify: http://localhost:${PORT}/api/verify/*`);
+  console.log(`   Contact: http://localhost:${PORT}/api/contact/*`);
   console.log(`   Health Check: http://localhost:${PORT}/api/health`);
   console.log('=====================================\n');
 });
